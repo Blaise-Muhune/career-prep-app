@@ -217,8 +217,8 @@ export default function StepDetailPage() {
               </Button>
             ) : (
               <Badge 
-                variant="success"
-                className="px-4 py-2 text-base flex items-center gap-2"
+                variant="default" 
+                className="px-4 py-2 text-base flex items-center gap-2 bg-green-500 hover:bg-green-600"
               >
                 <CheckCircle className="h-5 w-5" />
                 Completed
