@@ -19,11 +19,11 @@ export default function Success() {
       return Math.random() * (max - min) + min
     }
 
-    const interval: NodeJS.Timer = setInterval(function() {
+    const interval = setInterval(function() {
       const timeLeft = animationEnd - Date.now()
 
       if (timeLeft <= 0) {
-        return clearInterval(interval)
+        return clearInterval(interval as NodeJS.Timeout)
       }
 
       const particleCount = 50 * (timeLeft / duration)
