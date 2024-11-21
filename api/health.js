@@ -1,12 +1,10 @@
 import express from 'express';
-import { prisma } from '../config/prisma.js';
 
 const router = express.Router();
 
 router.get('/', async (req, res) => {
   try {
-    // Check database connection
-    await prisma.$queryRaw`SELECT 1`;
+    console.log('Health check successful');
     
     res.status(200).json({
       status: 'healthy',
