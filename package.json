@@ -10,6 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@clerk/clerk-react": "^5.16.1",
     "@clerk/nextjs": "^6.4.0",
     "@prisma/client": "^5.22.0",
     "@radix-ui/react-avatar": "^1.1.1",
@@ -38,8 +39,8 @@
     "next": "15.0.2",
     "openai": "^4.72.0",
     "prisma": "^5.22.0",
-    "react": "19.0.0-rc-02c0e824-20241028",
-    "react-dom": "19.0.0-rc-02c0e824-20241028",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "sonner": "^1.7.0",
     "stripe": "^17.3.1",
     "tailwind-merge": "^2.5.4",
