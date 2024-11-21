@@ -115,7 +115,7 @@ export default function Success() {
                   </motion.div>
                 ))}
               </div>
-              <h2 className="text-2xl font-semibold">What's Next?</h2>
+              <h2 className="text-2xl font-semibold">What&apos;s Next?</h2>
               <div className="grid gap-4 text-left">
                 {[
                   "Complete your profile to personalize your experience",

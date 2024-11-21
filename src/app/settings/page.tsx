@@ -99,7 +99,7 @@ export default function SettingsPage() {
     };
 
     fetchSettings();
-  }, [router, setTheme, defaultPreferences]);
+  }, [router, setTheme]);
 
   // Fetch subscription data
   useEffect(() => {

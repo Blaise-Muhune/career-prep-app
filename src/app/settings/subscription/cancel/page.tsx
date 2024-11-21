@@ -60,7 +60,7 @@ export default function CancelSubscription() {
             <div>
               <CardTitle>Cancel Subscription</CardTitle>
               <CardDescription>
-                We're sorry to see you go
+                We&apos;re sorry to see you go
               </CardDescription>
             </div>
           </div>

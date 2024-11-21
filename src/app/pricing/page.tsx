@@ -42,6 +42,21 @@ type PricingCardProps = {
   exclusive?: boolean
 }
 
+interface StripeError {
+  type: string;
+  message: string;
+  code?: string;
+}
+
+interface ApiError {
+  response?: {
+    data?: {
+      error?: string;
+    };
+  };
+  message: string;
+}
+
 const PricingHeader = ({ title, subtitle }: { title: string; subtitle: string }) => (
     <div className="text-center space-y-4">
       <h1 className="text-4xl font-bold tracking-tight">{title}</h1>
@@ -135,7 +150,7 @@ const PricingHeader = ({ title, subtitle }: { title: string; subtitle: string })
     const [user, setUser] = useState<User | null>(null)
     const [loading, setLoading] = useState(true)
     const togglePricingPeriod = (value: string) => setIsYearly(parseInt(value) === 1)
-    const [stripePromise, setStripePromise] = useState<Promise<any> | null>(null)
+    const [stripePromise, setStripePromise] = useState<Promise<Stripe | null> | null>(null)
   
     useEffect(() => {
       const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -157,21 +172,13 @@ const PricingHeader = ({ title, subtitle }: { title: string; subtitle: string })
       }
 
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
-      console.log('Creating checkout session with:', {
-        userId: user.uid,
-        email: user.email,
-        priceId,
-        subscription
-      });
-
+      
       const { data } = await axios.post(`${API_BASE_URL}/api/checkout`, {
         userId: user.uid,
         email: user.email,
         priceId,
         subscription
       });
-
-      console.log('Checkout session response:', data);
 
       if (data.sessionId) {
         const stripe = await stripePromise;
@@ -188,9 +195,16 @@ const PricingHeader = ({ title, subtitle }: { title: string; subtitle: string })
           throw error;
         }
       }
-    } catch (error: any) {
-      console.error('Error during checkout:', error.response?.data || error);
-      toast.error(error.response?.data?.error || 'Error during checkout. Please try again.');
+    } catch (error: unknown) {
+      const apiError = error as ApiError;
+      console.error(
+        'Error during checkout:', 
+        apiError.response?.data || apiError.message
+      );
+      toast.error(
+        apiError.response?.data?.error || 
+        'Error during checkout. Please try again.'
+      );
     }
   };
 
