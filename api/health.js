@@ -1,24 +1,10 @@
-import express from 'express';
-
-const router = express.Router();
-
-router.get('/', async (req, res) => {
-  try {
-    console.log('Health check successful');
-    
-    res.status(200).json({
-      status: 'healthy',
-      timestamp: new Date().toISOString(),
-      database: 'connected'
-    });
-  } catch (error) {
-    console.error('Health check failed:', error);
-    res.status(500).json({
-      status: 'unhealthy',
-      error: error.message,
-      timestamp: new Date().toISOString()
-    });
+export default function handler(req, res) {
+  if (req.method === 'GET') {
+    // Handle GET requests
+    res.status(200).json({ message: 'Hello, world!' });
+  } else {
+    // Handle unsupported methods
+    res.setHeader('Allow', ['GET']);
+    res.status(405).end(`Method ${req.method} Not Allowed`);
   }
-});
-
-export const healthRouter = router; 
+}
