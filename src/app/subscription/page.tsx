@@ -8,6 +8,16 @@ import { Check, Sparkles, Building, Rocket } from 'lucide-react'
 import { auth } from "@/firebaseConfig";
 import axios from 'axios';
 
+interface SubscriptionTier {
+  name: string;
+  price: string;
+  description: string;
+  icon: any;
+  features: string[];
+  planId: string;
+  highlighted?: boolean;
+}
+
 const subscriptionTiers = [
   {
     name: 'Basic',
@@ -66,7 +76,7 @@ export default function SubscriptionPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleSubscribe = async (tier) => {
+  const handleSubscribe = async (tier: SubscriptionTier) => {
     setLoading(true);
     try {
       const user = auth.currentUser;
