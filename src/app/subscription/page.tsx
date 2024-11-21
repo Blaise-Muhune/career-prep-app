@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
-import { Check, Sparkles, Building, Rocket } from 'lucide-react'
+import { Check, Sparkles, Building, Rocket, LucideIcon } from 'lucide-react'
 import { auth } from "@/firebaseConfig";
 import axios from 'axios';
 
@@ -12,7 +12,7 @@ interface SubscriptionTier {
   name: string;
   price: string;
   description: string;
-  icon: any;
+  icon: LucideIcon;
   features: string[];
   planId: string;
   highlighted?: boolean;
