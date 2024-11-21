@@ -178,9 +178,9 @@ export default function DashboardPage() {
               <Link href="/notifications" className="flex items-center gap-2">
                 <Bell className="h-5 w-5" />
                 <span>Notifications</span>
-                {userData?.upcomingTasks.filter(task => !task.completed).length > 0 && (
+                {userData?.upcomingTasks && userData.upcomingTasks.filter((task: Task) => !task.completed).length > 0 && (
                   <span className="absolute -top-2 -right-2 flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-red-500 rounded-full animate-pulse">
-                    {userData.upcomingTasks.filter(task => !task.completed).length}
+                    {userData.upcomingTasks.filter((task: Task) => !task.completed).length}
                   </span>
                 )}
               </Link>
