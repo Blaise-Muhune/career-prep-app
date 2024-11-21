@@ -4,7 +4,7 @@ import { motion } from "framer-motion"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { ArrowRight, Brain, Target, Users, Sparkles, Star, Trophy, ChartLine, CheckCircle2 } from "lucide-react"
+import { ArrowRight, Brain, Target, Users, Trophy, CheckCircle2 } from "lucide-react"
 
 const guides = [
   {

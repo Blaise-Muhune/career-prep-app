@@ -10,9 +10,9 @@ import confetti from 'canvas-confetti'
 import { useSearchParams } from 'next/navigation'
 
 export default function Success() {
-  const [customerName, setCustomerName] = useState<string>('')
-  const searchParams = useSearchParams()
-  const sessionId = searchParams.get('session_id')
+  // const [customerName, setCustomerName] = useState<string>('')
+  // const searchParams = useSearchParams()
+  // const sessionId = searchParams.get('session_id')
 
   useEffect(() => {
     // Trigger confetti animation on mount

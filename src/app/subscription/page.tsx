@@ -5,8 +5,6 @@ import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
 import { Check, Sparkles, Building, Rocket } from 'lucide-react'
-import { Elements } from '@stripe/stripe-js';
-import { stripePromise } from '@/lib/stripe';
 import { auth } from "@/firebaseConfig";
 import axios from 'axios';
 
@@ -24,7 +22,7 @@ const subscriptionTiers = [
       'Career step guidance',
       'Basic notifications',
     ],
-    priceId: 'price_XXXXX',
+    planId: 'basic',
   },
   {
     name: 'Pro',
@@ -42,7 +40,7 @@ const subscriptionTiers = [
       'Advanced progress analytics',
     ],
     highlighted: true,
-    priceId: 'price_YYYYY',
+    planId: 'pro',
   },
   {
     name: 'Enterprise',
@@ -60,13 +58,12 @@ const subscriptionTiers = [
       'Custom notification system',
       'API access for integration',
     ],
-    priceId: 'price_ZZZZZ',
+    planId: 'enterprise',
   },
 ]
 
 export default function SubscriptionPage() {
   const [loading, setLoading] = useState(false);
-  const [selectedTier, setSelectedTier] = useState(null);
   const router = useRouter();
 
   const handleSubscribe = async (tier) => {
@@ -78,40 +75,26 @@ export default function SubscriptionPage() {
         return;
       }
 
-      // First create a payment method
-      const stripe = await stripePromise;
-      if (!stripe) {
-        throw new Error('Stripe failed to load');
+      if (tier.name === 'Enterprise') {
+        // Redirect to contact sales page or open email client
+        window.location.href = 'mailto:sales@yourcompany.com?subject=Enterprise Plan Inquiry';
+        return;
       }
 
-      const { error: paymentMethodError, paymentMethod } = await stripe.createPaymentMethod({
-        type: 'card',
-        card: elements.getElement('card'),
-      });
-
-      if (paymentMethodError) {
-        throw new Error(paymentMethodError.message);
-      }
-
-      // Create subscription with payment method
-      const response = await axios.post('/api/create-subscription', {
-        priceId: tier.priceId,
+      // Here you would typically make an API call to update the user's subscription
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
+      await axios.post(`${API_BASE_URL}/api/subscription/update`, {
         userId: user.uid,
-        paymentMethod: paymentMethod.id,
+        planId: tier.planId
+      }, {
+        withCredentials: true
       });
 
-      const { clientSecret } = response.data;
-
-      // Confirm the payment
-      const { error } = await stripe.confirmCardPayment(clientSecret);
-
-      if (error) {
-        throw new Error(error.message);
-      } else {
-        router.push('/dashboard');
-      }
+      // Redirect to dashboard after successful subscription
+      router.push('/dashboard');
     } catch (error) {
       console.error('Subscription error:', error);
+      // Here you might want to show an error message to the user
     } finally {
       setLoading(false);
     }

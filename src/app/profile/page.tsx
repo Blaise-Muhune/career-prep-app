@@ -24,8 +24,6 @@ import {
   Pencil,
   ArrowLeft,
   Mail,
-  Monitor,
-  Globe,
 } from 'lucide-react'
 
 interface Profile {

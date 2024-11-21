@@ -38,7 +38,7 @@ app.use('/api/career-analysis', careerAnalysisRouter);
 app.use('/api/steps', stepsRouter);
 app.use('/api/notifications', notificationsRouter);
 // Error handling middleware
-app.use((err, req, res, next) => {
+app.use((err, req, res) => {
   console.error('Server error:', err);
   res.status(500).json({
     error: 'Internal server error',

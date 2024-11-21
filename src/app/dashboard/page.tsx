@@ -7,7 +7,6 @@ import axios from 'axios';
 import { auth } from "@/firebaseConfig"; // Import Firebase auth
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { Bell, Settings, User, ListChecks, ChevronRight, LogOut } from 'lucide-react';
 import { signOut } from "firebase/auth"; // Add this import
 import { cn } from "@/lib/utils";
@@ -166,7 +165,7 @@ export default function DashboardPage() {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-4xl font-bold">Welcome back, {userData?.name}!</h1>
-              <p className="text-muted-foreground mt-2">Let's continue your journey to becoming a {userData?.dreamJob}</p>
+              <p className="text-muted-foreground mt-2">Let&apos;s continue your journey to becoming a {userData?.dreamJob}</p>
             </div>
             
             {/* Notifications Button - Made to stand out */}

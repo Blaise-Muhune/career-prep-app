@@ -28,6 +28,8 @@ export default function CancelSubscription() {
         userId: user.uid
       });
 
+      console.log(response);
+
       toast.success('Subscription will be canceled at the end of the billing period');
       router.push('/settings/subscription');
     } catch (error) {
