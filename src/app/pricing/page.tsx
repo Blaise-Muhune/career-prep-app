@@ -42,11 +42,7 @@ type PricingCardProps = {
   exclusive?: boolean
 }
 
-interface StripeError {
-  type: string;
-  message: string;
-  code?: string;
-}
+
 
 interface ApiError {
   response?: {
