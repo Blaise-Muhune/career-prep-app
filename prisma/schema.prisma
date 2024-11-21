@@ -1,0 +1,119 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id             String          @id
+  email          String          @unique
+  name           String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  dreamJob       String          @default("Unknown")
+  preferences    Json?
+  profile        Profile?
+  tasks          Task[]
+  careerAnalyses CareerAnalysis[]
+  stepProgress   StepProgress[]
+  notifications  Notification[]
+  stripeCustomerId String?
+  subscription    Subscription?
+  invoices       Invoice[]
+}
+
+model Subscription {
+  id                String    @id @default(cuid())
+  stripeSubId       String    @unique
+  userId            String    @unique
+  user              User      @relation(fields: [userId], references: [id])
+  status            String    // active, trialing, canceled, incomplete, etc.
+  plan              String    // price ID from Stripe
+  currentPeriodEnd  DateTime
+  cancelAtPeriodEnd Boolean   @default(false)
+  canceledAt        DateTime?
+  active            Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+model Invoice {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  stripeInvoiceId String   @unique
+  subscriptionId  String?
+  amount          Float
+  status          String   // paid, open, void, uncollectible
+  currency        String
+  periodStart     DateTime
+  periodEnd       DateTime
+  createdAt       DateTime @default(now())
+  paidAt          DateTime?
+}
+
+model Profile {
+  id              Int      @id @default(autoincrement())
+  userId          String   @unique
+  bio             String?
+  structuredData  Json?
+  dreamJob        String?
+  dreamCompany    String?
+  dreamSalary     String?
+  skills          Skill[]
+  user            User     @relation(fields: [userId], references: [id])
+}
+
+model Skill {
+  id        Int      @id @default(autoincrement())
+  name      String
+  profileId Int
+  profile   Profile  @relation(fields: [profileId], references: [id])
+}
+
+model Task {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  priority    String   // high/medium/low
+  dueDate     DateTime
+  completed   Boolean  @default(false)
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+}
+
+model CareerAnalysis {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  analysis  String   // JSON string
+  timestamp DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model StepProgress {
+  id          Int       @id @default(autoincrement())
+  userId      String
+  stepId      Int
+  status      String    @default("NOT_STARTED")
+  startedAt   DateTime?
+  completedAt DateTime?
+  user        User      @relation(fields: [userId], references: [id])
+
+  @@unique([userId, stepId])
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  userId    String
+  type      String   // 'info' | 'success' | 'warning'
+  message   String
+  date      DateTime @default(now())
+  read      Boolean  @default(false)
+  stepId    Int?     // Add this field to link to steps
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+// Add more models as needed
