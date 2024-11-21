@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import Link from 'next/link';
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
@@ -198,7 +198,7 @@ export default function MarketingPage() {
           </AnimatedSection>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {testimonials.map((testimonial, index) => (
+            {testimonials.map((testimonial) => (
               <AnimatedSection key={testimonial.name}>
                 <Card className="hover:shadow-lg transition-all duration-300">
                   <CardContent className="pt-6">

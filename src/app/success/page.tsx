@@ -1,19 +1,14 @@
 "use client"
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { CheckCircle2, Sparkles, ArrowRight, Star } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import Link from 'next/link'
 import confetti from 'canvas-confetti'
-import { useSearchParams } from 'next/navigation'
 
 export default function Success() {
-  // const [customerName, setCustomerName] = useState<string>('')
-  // const searchParams = useSearchParams()
-  // const sessionId = searchParams.get('session_id')
-
   useEffect(() => {
     // Trigger confetti animation on mount
     const duration = 3 * 1000

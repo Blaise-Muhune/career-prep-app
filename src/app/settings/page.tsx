@@ -46,16 +46,18 @@ interface Subscription {
   cancelAtPeriodEnd: boolean;
 }
 
+// Move defaultPreferences outside the component to avoid recreating it on every render
+const defaultPreferences = {
+  emailNotifications: false,
+  taskReminders: false,
+  weeklyProgress: false,
+  theme: 'system' as const,
+  timeZone: 'UTC'
+} as const;
+
 export default function SettingsPage() {
   const { setTheme } = useTheme()
-  const defaultPreferences = {
-    emailNotifications: false,
-    taskReminders: false,
-    weeklyProgress: false,
-    theme: 'system' as const,
-    timeZone: 'UTC'
-  };
-
+  
   const [settings, setSettings] = useState<UserSettings | null>(null)
   const [loading, setLoading] = useState(true)
   const [subscriptionLoading, setSubscriptionLoading] = useState(true)
@@ -97,7 +99,7 @@ export default function SettingsPage() {
     };
 
     fetchSettings();
-  }, [router, setTheme]);
+  }, [router, setTheme, defaultPreferences]);
 
   // Fetch subscription data
   useEffect(() => {

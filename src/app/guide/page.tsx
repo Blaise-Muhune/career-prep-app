@@ -138,7 +138,7 @@ export default function GuidePage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {guide.steps.map((step, index) => (
+                    {guide.steps.map((step) => (
                       <div key={step.title} className="flex gap-3">
                         <div className="flex-shrink-0 mt-1">
                           <CheckCircle2 className="h-5 w-5 text-primary" />

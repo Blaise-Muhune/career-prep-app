@@ -13,15 +13,24 @@ import { loadStripe } from "@stripe/stripe-js"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 
+interface User {
+  uid: string;
+  email: string;
+}
+
+interface CheckoutHandler {
+  (priceId: string, subscription: boolean): Promise<void>;
+}
+
 type PricingSwitchProps = {
   onSwitch: (value: string) => void
 }
 
 type PricingCardProps = {
-  user: any
-  handleCheckout: any
-  priceIdMonthly: any
-  priceIdYearly: any
+  user: User | null
+  handleCheckout: CheckoutHandler
+  priceIdMonthly: string
+  priceIdYearly: string
   isYearly?: boolean
   title: string
   monthlyPrice?: number
@@ -123,7 +132,7 @@ const PricingHeader = ({ title, subtitle }: { title: string; subtitle: string })
 
   export default function Pricing() {
     const [isYearly, setIsYearly] = useState<boolean>(false)
-    const [user, setUser] = useState<any>(null)
+    const [user, setUser] = useState<User | null>(null)
     const [loading, setLoading] = useState(true)
     const togglePricingPeriod = (value: string) => setIsYearly(parseInt(value) === 1)
     const [stripePromise, setStripePromise] = useState<Promise<any> | null>(null)
@@ -139,7 +148,7 @@ const PricingHeader = ({ title, subtitle }: { title: string; subtitle: string })
       return () => unsubscribe()
     }, [])
 
-  const handleCheckout = async (priceId: string, subscription: boolean) => {
+  const handleCheckout: CheckoutHandler = async (priceId, subscription) => {
     try {
       if (!user) {
         toast.error('Please log in to continue');

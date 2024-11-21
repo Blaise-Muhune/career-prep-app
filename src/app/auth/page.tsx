@@ -86,7 +86,7 @@ function AuthPage(): JSX.Element {
         <div className="relative z-20 mt-auto">
           <blockquote className="space-y-2">
             <p className="text-lg">
-              "This platform helped me land my dream job at a top tech company. The structured approach and personalized guidance made all the difference."
+              &ldquo;This platform helped me land my dream job at a top tech company. The structured approach and personalized guidance made all the difference.&rdquo;
             </p>
             <footer className="text-sm">Sofia Davis - Senior Software Engineer</footer>
           </blockquote>

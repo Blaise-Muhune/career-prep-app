@@ -71,7 +71,7 @@ export default function CancelSubscription() {
             <h3 className="font-medium">Before you cancel:</h3>
             <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground">
               <li>Your subscription will remain active until the end of your current billing period</li>
-              <li>You'll lose access to premium features when your subscription ends</li>
+              <li>You&apos;ll lose access to premium features when your subscription ends</li>
               <li>You can reactivate your subscription at any time</li>
               <li>Your career data and progress will be preserved</li>
             </ul>

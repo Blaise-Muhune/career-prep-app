@@ -1,6 +1,5 @@
 import express from 'express';
 import { prisma } from '../config/prisma.js';
-import { openai } from '../config/openai.js';
 
 const router = express.Router();
 
