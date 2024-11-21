@@ -1,7 +1,5 @@
 {
-    "functions": {
-        "api/*": {
-            "source": "server/api/*"
-        }
-    }
+    "rewrites": [
+        { "source": "/api/:path*", "destination": "/server/api/:path*" }
+    ]
 }
