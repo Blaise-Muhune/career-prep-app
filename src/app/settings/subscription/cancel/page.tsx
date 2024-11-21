@@ -24,7 +24,8 @@ export default function CancelSubscription() {
         return;
       }
 
-      const response = await axios.post('http://localhost:4000/api/cancel-subscription', {
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
+      const response = await axios.post(`${API_BASE_URL}/api/cancel-subscription`, {
         userId: user.uid
       });
 
