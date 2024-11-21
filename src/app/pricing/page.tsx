@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils"
 import { auth } from "@/firebaseConfig"
 import { onAuthStateChanged } from "firebase/auth"
 import axios from "axios"
-import { loadStripe } from "@stripe/stripe-js"
+import { loadStripe, Stripe } from "@stripe/stripe-js"
 import { toast } from "sonner"
 import { useRouter } from "next/navigation"
 
@@ -29,8 +29,8 @@ type PricingSwitchProps = {
 type PricingCardProps = {
   user: User | null
   handleCheckout: CheckoutHandler
-  priceIdMonthly: string
-  priceIdYearly: string
+  priceIdMonthly: string | undefined
+  priceIdYearly: string | undefined
   isYearly?: boolean
   title: string
   monthlyPrice?: number
@@ -120,7 +120,7 @@ const PricingHeader = ({ title, subtitle }: { title: string; subtitle: string })
             size="lg"
             variant={popular ? "default" : "outline"}
             onClick={() => {
-              if (user?.uid) {
+              if (user?.uid && priceIdMonthly && priceIdYearly) {
                 handleCheckout(isYearly ? priceIdYearly : priceIdMonthly, true)
               } else {
                 toast("Please login or sign up to purchase", {
@@ -142,6 +142,7 @@ const PricingHeader = ({ title, subtitle }: { title: string; subtitle: string })
   }
 
   export default function Pricing() {
+    const router = useRouter();
     const [isYearly, setIsYearly] = useState<boolean>(false)
     const [user, setUser] = useState<User | null>(null)
     const [loading, setLoading] = useState(true)
@@ -150,7 +151,7 @@ const PricingHeader = ({ title, subtitle }: { title: string; subtitle: string })
   
     useEffect(() => {
       const unsubscribe = onAuthStateChanged(auth, (user) => {
-        setUser(user)
+        setUser(user as User | null)
         setLoading(false)
       })
 
