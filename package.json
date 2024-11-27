@@ -4,6 +4,7 @@
   "main": "src/server/api.js",
   "type": "module",
   "scripts": {
+    "postinstall": "prisma generate",
     "start": "node src/server/api.js",
     "dev": "next dev",
     "build": "next build",
