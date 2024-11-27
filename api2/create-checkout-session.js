@@ -1,18 +1,16 @@
-import express from 'express';
 import { stripe } from '../config/stripe.js';
 import { prisma } from '../config/prisma.js';
 
-const router = express.Router();
-
 
   // Regular middleware for parsed JSON bodies
-router.use((req, res, next) => {
+
+export default function handler(req, res, next) {
     if (req.originalUrl === '/api/webhook') {
       next();
     } else {
       express.json()(req, res, next);
     }
-  });
+  }
   
   // Webhook endpoint with raw body
 
@@ -20,7 +18,7 @@ router.use((req, res, next) => {
   // Add this endpoint to handle subscription cancellation
   
   // Update the create-checkout-session endpoint
-router.post('/', async (req, res) => {
+export default async function handler(req, res) {
     try {
       const { userId, email, priceId, subscription } = req.body;
       const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
@@ -77,7 +75,6 @@ router.post('/', async (req, res) => {
         details: error.message 
       });
     }
-  });
+  }
   
 
-export const checkoutRouter = router; 

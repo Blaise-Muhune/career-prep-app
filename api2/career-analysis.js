@@ -1,10 +1,7 @@
-import express from 'express';  
 import { prisma } from '../config/prisma.js';
 import { openai } from '../config/openai.js';
 
-const router = express.Router();
-
-router.post('/', async (req, res) => {
+export default function handler(req, res) {
     const { userId } = req.body;
     try {
       // First, check for recent analysis
@@ -173,4 +170,3 @@ router.post('/refresh', async (req, res) => {
     }
   });
   
-export const careerAnalysisRouter = router; 

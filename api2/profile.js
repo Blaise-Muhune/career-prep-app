@@ -1,10 +1,7 @@
-import express from 'express';
 import { prisma } from '../config/prisma.js';
 import { openai } from '../config/openai.js';
 
-const router = express.Router();
-
-router.get('/userProfile', async (req, res) => {
+export default async function handler(req, res) {
     try {
       const userId = req.query.userId; // Assuming you have user authentication and can get the user ID
       const userProfile = await prisma.user.findUnique({
@@ -38,7 +35,7 @@ router.get('/userProfile', async (req, res) => {
       console.error('Error fetching user profile:', error);
       res.status(500).json({ error: 'Failed to fetch user profile' });
     }
-  });
+  }
   
   function calculateOverallProgress(tasks) {
     const totalTasks = tasks.length;
@@ -47,7 +44,7 @@ router.get('/userProfile', async (req, res) => {
   }
   
 
-router.post('/structure-profile', async (req, res) => {
+export default async function handler(req, res) {
     const { userId } = req.body;
     try {
       // First, check for recent analysis
@@ -170,6 +167,5 @@ router.post('/structure-profile', async (req, res) => {
         details: error.message 
       });
     }
-  });
+  }
 
-export const profileRouter = router; 

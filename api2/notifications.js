@@ -1,10 +1,7 @@
-import express from 'express';
 import { prisma } from '../config/prisma.js';
 
-const router = express.Router();
-
  // Fetch notifications for a user
- router.get('/', async (req, res) => {
+ export default async function handler(req, res) {
     try {
       const userId = req.query.userId;
       
@@ -33,8 +30,9 @@ const router = express.Router();
       console.error('Error fetching notifications:', error);
       res.status(500).json({ error: 'Failed to fetch notifications' });
     }
-  });
-router.post('/:id/read', async (req, res) => {
+  }
+
+export default async function handler(req, res) {
     try {
       const notificationId = parseInt(req.params.id);
       
@@ -59,10 +57,10 @@ router.post('/:id/read', async (req, res) => {
       console.error('Error marking notification as read:', error);
       res.status(500).json({ error: 'Failed to mark notification as read' });
     }
-  });
+  }
   
   // Delete a notification
-  router.delete('/:id', async (req, res) => {
+export default async function handler(req, res) {
     try {
       const notificationId = parseInt(req.params.id);
       
@@ -77,10 +75,10 @@ router.post('/:id/read', async (req, res) => {
       console.error('Error deleting notification:', error);
       res.status(500).json({ error: 'Failed to delete notification' });
     }
-  });
+  }
   
   // Create a notification (useful for system notifications)
-  router.post('/', async (req, res) => {
+export default async function handler(req, res) {
     try {
       const { userId, type, message } = req.body;
   
@@ -103,6 +101,5 @@ router.post('/:id/read', async (req, res) => {
       console.error('Error creating notification:', error);
       res.status(500).json({ error: 'Failed to create notification' });
     }
-  });
+  }
 
-export const notificationsRouter = router; 
