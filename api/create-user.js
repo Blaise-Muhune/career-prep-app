@@ -1,6 +1,14 @@
 import { prisma } from './config/prisma.js';
 
 export default async function handler(req, res) {
+    // Check HTTP method
+    if (req.method !== 'POST') {
+        return res.status(405).json({ 
+            error: 'Method not allowed',
+            message: 'This endpoint only accepts POST requests' 
+        });
+    }
+
     console.log('Received user creation request:', req.body);
     
     try {
