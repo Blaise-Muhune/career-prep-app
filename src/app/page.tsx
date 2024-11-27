@@ -59,7 +59,7 @@ export default function Home() {
     
     setIsSubmitting(true);
     try {
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://career-prep-app.vercel.app';
 
       // Prepare the user data
       const userData = {

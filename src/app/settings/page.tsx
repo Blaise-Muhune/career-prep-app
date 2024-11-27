@@ -74,7 +74,7 @@ export default function SettingsPage() {
           return;
         }
 
-        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
+        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://career-prep-app.vercel.app';
         const response = await axios.get(`${API_BASE_URL}/api/get-user/${currentUser.uid}`);
         
         const userData = {
@@ -108,7 +108,7 @@ export default function SettingsPage() {
         const currentUser = auth.currentUser;
         if (!currentUser) return;
 
-        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
+        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://career-prep-app.vercel.app';
         console.log('Fetching subscription for user:', currentUser.uid);
         
         const response = await axios.get(`${API_BASE_URL}/api/get-subscription/${currentUser.uid}`);
@@ -167,7 +167,7 @@ export default function SettingsPage() {
       if (!settings) return;
       
       setLoading(true);
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://career-prep-app.vercel.app';
       
       const response = await axios.put(`${API_BASE_URL}/api/user-preferences/${settings.id}`, {
         preferences: settings.preferences

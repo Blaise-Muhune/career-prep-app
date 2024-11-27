@@ -37,7 +37,7 @@ export default function StepDetailPage() {
           return;
         }
 
-        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
+        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://career-prep-app.vercel.app';
         const response = await axios.get(`${API_BASE_URL}/api/steps/${stepId}`, {
           params: { userId: currentUser.uid }
         });
@@ -60,7 +60,7 @@ export default function StepDetailPage() {
         return;
       }
 
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://career-prep-app.vercel.app';
       await axios.post(`${API_BASE_URL}/api/start-step/${stepId}`, {
         userId: currentUser.uid
       });

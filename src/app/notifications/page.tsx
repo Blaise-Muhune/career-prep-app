@@ -33,7 +33,7 @@ export default function NotificationsPage() {
           return;
         }
 
-        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000'
+        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://career-prep-app.vercel.app'
         const response = await axios.get(`${API_BASE_URL}/api/get-notifications`, {
           params: { userId: currentUser.uid }
         })
@@ -56,7 +56,7 @@ export default function NotificationsPage() {
         
         // Mark as read before navigating
         if (!notification.read) {
-          const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
+          const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://career-prep-app.vercel.app';
           await axios.post(
             `${API_BASE_URL}/api/read-notification/${notification.id}`,
             {},
@@ -79,7 +79,7 @@ export default function NotificationsPage() {
 
   const markAsRead = async (id: number) => {
     try {
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000'
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://career-prep-app.vercel.app'
       await axios.post(`${API_BASE_URL}/api/read-notification/${id}`, {}, 
         { withCredentials: true }
       )
@@ -93,7 +93,7 @@ export default function NotificationsPage() {
 
   const deleteNotification = async (id: number) => {
     try {
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000'
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://career-prep-app.vercel.app'
       await axios.delete(`${API_BASE_URL}/api/delete-notification/${id}`, 
         { withCredentials: true }
       )
