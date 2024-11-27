@@ -1,5 +1,5 @@
-import { stripe } from '../config/stripe.js';
-import { prisma } from '../config/prisma.js';
+import { stripe } from './config/stripe.js';
+import { prisma } from './config/prisma.js';
 import express from 'express';
 
 // Middleware for JSON parsing

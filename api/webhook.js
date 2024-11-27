@@ -1,10 +1,7 @@
-import express from 'express';
-import { stripe } from '../config/stripe.js';
-import { prisma } from '../config/prisma.js';
+import { stripe } from './config/stripe.js';
+import { prisma } from './config/prisma.js';
 
-const router = express.Router();
-
-router.post('/api/webhook', express.raw({type: 'application/json'}), async (req, res) => {
+export default async function webhook(req, res) {
     const sig = req.headers['stripe-signature'];
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   
@@ -81,6 +78,4 @@ router.post('/api/webhook', express.raw({type: 'application/json'}), async (req,
       console.error('Webhook error:', err.message);
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
-  });
-
-export const webhookRouter = router; 
+  }

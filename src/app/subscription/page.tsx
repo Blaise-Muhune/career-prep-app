@@ -87,13 +87,13 @@ export default function SubscriptionPage() {
 
       if (tier.name === 'Enterprise') {
         // Redirect to contact sales page or open email client
-        window.location.href = 'mailto:sales@yourcompany.com?subject=Enterprise Plan Inquiry';
+        window.location.href = 'mailto:blaisemu007@gmail.com?subject=Enterprise Plan Inquiry';
         return;
       }
 
       // Here you would typically make an API call to update the user's subscription
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
-      await axios.post(`${API_BASE_URL}/api/subscription/update`, {
+      await axios.post(`${API_BASE_URL}/api/update-subscription`, {
         userId: user.uid,
         planId: tier.planId
       }, {

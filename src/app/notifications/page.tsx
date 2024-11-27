@@ -34,7 +34,7 @@ export default function NotificationsPage() {
         }
 
         const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000'
-        const response = await axios.get(`${API_BASE_URL}/api/notifications`, {
+        const response = await axios.get(`${API_BASE_URL}/api/get-notifications`, {
           params: { userId: currentUser.uid }
         })
         setNotifications(response.data)
@@ -58,7 +58,7 @@ export default function NotificationsPage() {
         if (!notification.read) {
           const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
           await axios.post(
-            `${API_BASE_URL}/api/notifications/${notification.id}/read`,
+            `${API_BASE_URL}/api/read-notification/${notification.id}`,
             {},
             { withCredentials: true }
           );
@@ -80,7 +80,7 @@ export default function NotificationsPage() {
   const markAsRead = async (id: number) => {
     try {
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000'
-      await axios.post(`${API_BASE_URL}/api/notifications/${id}/read`, {}, 
+      await axios.post(`${API_BASE_URL}/api/read-notification/${id}`, {}, 
         { withCredentials: true }
       )
       setNotifications(notifications.map(notif => 
@@ -94,7 +94,7 @@ export default function NotificationsPage() {
   const deleteNotification = async (id: number) => {
     try {
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000'
-      await axios.delete(`${API_BASE_URL}/api/notifications/${id}`, 
+      await axios.delete(`${API_BASE_URL}/api/delete-notification/${id}`, 
         { withCredentials: true }
       )
       setNotifications(notifications.filter(notif => notif.id !== id))

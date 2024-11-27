@@ -105,11 +105,11 @@ export default function DashboardPage() {
         const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
         
         const [userResponse, analysisResponse] = await Promise.all([
-          axios.get(`${API_BASE_URL}/api/profile/userProfile`, {
+          axios.get(`${API_BASE_URL}/api/get-user`, {
             params: { userId },
             withCredentials: true,
           }),
-          axios.post(`${API_BASE_URL}/api/profile/structure-profile`, {
+          axios.post(`${API_BASE_URL}/api/structure-profile`, {
             userId
           }, {
             withCredentials: true,

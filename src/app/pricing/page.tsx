@@ -170,7 +170,7 @@ const PricingHeader = ({ title, subtitle }: { title: string; subtitle: string })
 
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
       
-      const { data } = await axios.post(`${API_BASE_URL}/api/checkout`, {
+      const { data } = await axios.post(`${API_BASE_URL}/api/create-checkout-session`, {
         userId: user.uid,
         email: user.email,
         priceId,

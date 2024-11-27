@@ -75,7 +75,7 @@ export default function SettingsPage() {
         }
 
         const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
-        const response = await axios.get(`${API_BASE_URL}/api/users/${currentUser.uid}`);
+        const response = await axios.get(`${API_BASE_URL}/api/get-user/${currentUser.uid}`);
         
         const userData = {
           ...response.data,
@@ -111,7 +111,7 @@ export default function SettingsPage() {
         const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
         console.log('Fetching subscription for user:', currentUser.uid);
         
-        const response = await axios.get(`${API_BASE_URL}/api/subscription/${currentUser.uid}`);
+        const response = await axios.get(`${API_BASE_URL}/api/get-subscription/${currentUser.uid}`);
         console.log('Subscription response:', response.data);
         
         if (response.data) {
@@ -169,7 +169,7 @@ export default function SettingsPage() {
       setLoading(true);
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
       
-      const response = await axios.put(`${API_BASE_URL}/api/users/${settings.id}/preferences`, {
+      const response = await axios.put(`${API_BASE_URL}/api/user-preferences/${settings.id}`, {
         preferences: settings.preferences
       });
 

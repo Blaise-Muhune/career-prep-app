@@ -79,7 +79,7 @@ export default function Home() {
 
       // Create user
       const response = await axios.post(
-        `${API_BASE_URL}/api/users`, 
+        `${API_BASE_URL}/api/create-user`, 
         userData,
         { 
           headers: {

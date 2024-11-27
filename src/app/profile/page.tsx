@@ -57,7 +57,7 @@ export default function ProfilePage() {
         }
 
         const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
-        const response = await axios.get(`${API_BASE_URL}/api/users/${currentUser.uid}`);
+        const response = await axios.get(`${API_BASE_URL}/api/get-user/${currentUser.uid}`);
         setUser(response.data);
       } catch (error) {
         console.error('Error fetching profile:', error);
@@ -98,7 +98,7 @@ export default function ProfilePage() {
       }
 
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:4000';
-      await axios.put(`${API_BASE_URL}/api/users/${currentUser.uid}`, {
+      await axios.put(`${API_BASE_URL}/api/create-user/${currentUser.uid}`, {
         name: user.name,
         bio: user.profile.bio,
         skills: user.profile.skills.map(s => s.name),
