@@ -1,6 +1,9 @@
 import { prisma } from './config/prisma.js';
 
 export default async function handler(req, res) {
+    // Parse the request body if it's a string
+    const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+    
     // Check HTTP method
     if (req.method !== 'POST') {
         return res.status(405).json({ 
@@ -9,7 +12,7 @@ export default async function handler(req, res) {
         });
     }
 
-    console.log('Received user creation request:', req.body);
+    console.log('Received user creation request:', body);
     
     try {
       const { 
@@ -21,7 +24,7 @@ export default async function handler(req, res) {
         dreamJob, 
         dreamCompany, 
         dreamSalary 
-      } = req.body;
+      } = body;
   
       // Validate required fields
       if (!id || !email || !name) {
