@@ -6,6 +6,7 @@ import { Pool } from '@neondatabase/serverless'
 export const runtime = 'edge'
 
 export async function GET(request: Request) {
+    console.log(request)
   const neon = new Pool({ connectionString: process.env.POSTGRES_PRISMA_URL })
   const adapter = new PrismaNeon(neon)
   const prisma = new PrismaClient({ adapter })
