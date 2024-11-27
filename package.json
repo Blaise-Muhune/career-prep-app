@@ -47,7 +47,8 @@
     "sonner": "^1.7.0",
     "stripe": "^17.3.1",
     "tailwind-merge": "^2.5.4",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "ws": "^8.18.0"
   },
   "devDependencies": {
     "@types/canvas-confetti": "^1.6.4",
