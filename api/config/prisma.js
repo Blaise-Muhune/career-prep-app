@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { PrismaNeon } from '@prisma/adapter-neon';
-import { Pool, NeonConfig } from '@neondatabase/serverless';
+import { Pool } from '@neondatabase/serverless';
 
 const neonConfig = {
     webSocketMode: true,
