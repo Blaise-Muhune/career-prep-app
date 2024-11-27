@@ -98,7 +98,7 @@ export default function ProfilePage() {
       }
 
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://career-prep-app.vercel.app';
-      await axios.put(`${API_BASE_URL}/api/create-user/${currentUser.uid}`, {
+      await axios.put(`${API_BASE_URL}/api/update-user/${currentUser.uid}`, {
         name: user.name,
         bio: user.profile.bio,
         skills: user.profile.skills.map(s => s.name),
