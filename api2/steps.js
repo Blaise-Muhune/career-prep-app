@@ -1,9 +1,6 @@
-import express from 'express';
 import { prisma } from '../config/prisma.js';
 
-const router = express.Router();
-
-router.get('/:stepId', async (req, res) => {
+export default async function handler(req, res) {
     const stepId = parseInt(req.params.stepId, 10);
     const { userId } = req.query;
     
@@ -75,10 +72,10 @@ router.get('/:stepId', async (req, res) => {
       console.error('Error fetching step:', error);
       res.status(500).json({ error: 'Failed to fetch step details' });
     }
-  });
+  }
   
   // Add endpoint to start a step
-  router.post('/:stepId/start', async (req, res) => {
+  export async function handler(req, res) {
     const { stepId } = req.params;
     const { userId } = req.body;
     
@@ -118,7 +115,7 @@ router.get('/:stepId', async (req, res) => {
       console.error('Error starting step:', error);
       res.status(500).json({ error: 'Failed to start step' });
     }
-  });
+  }
 
   function parseDuration(timeframe) {
     const number = parseInt(timeframe);
@@ -132,4 +129,3 @@ router.get('/:stepId', async (req, res) => {
     return 14 * 24 * 60 * 60 * 1000; // Default to 2 weeks
   }
 
-export const stepsRouter = router; 

@@ -1,10 +1,8 @@
-import express from 'express';
+
 import { stripe } from '../config/stripe.js';
 import { prisma } from '../config/prisma.js';
 
-const router = express.Router();
-
-router.post('/create-subscription', async (req, res) => {
+export default async function handler(req, res) {
     const { priceId, userId, paymentMethod } = req.body;
   
     try {
@@ -61,10 +59,10 @@ router.post('/create-subscription', async (req, res) => {
         details: error.message
       });
     }
-  });
+  }
   
 
-router.post('/cancel-subscription', async (req, res) => {
+export default async function handler(req, res) {
     try {
       const { userId } = req.body;
       
@@ -104,7 +102,7 @@ router.post('/cancel-subscription', async (req, res) => {
         details: error.message 
       });
     }
-  });
+  }
   
   // Add this endpoint after your other endpoints
 router.get('/:userId', async (req, res) => {

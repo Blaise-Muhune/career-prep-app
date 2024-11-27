@@ -4,6 +4,8 @@ import { openai } from '../config/openai.js';
 
 const router = express.Router();
 
+router.use(express.json());
+
 router.post('/', async (req, res) => {
     const { userId } = req.body;
     try {
