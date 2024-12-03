@@ -102,7 +102,7 @@ export default function DashboardPage() {
         }
 
         const userId = user.uid;
-        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://career-prep-app.vercel.app';
+        // const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://career-prep-app.vercel.app';
         
         const [userResponse, analysisResponse] = await Promise.all([
           axios.get('/api/get-user', {
