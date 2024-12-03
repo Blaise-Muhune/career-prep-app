@@ -105,11 +105,11 @@ export default function DashboardPage() {
         const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://career-prep-app.vercel.app';
         
         const [userResponse, analysisResponse] = await Promise.all([
-          axios.get(`${API_BASE_URL}/api/get-user`, {
+          axios.get('/api/get-user', {
             params: { userId },
             withCredentials: true,
           }),
-          axios.post(`${API_BASE_URL}/api/structure-profile`, {
+          axios.post('/api/structure-profile', {
             userId
           }, {
             withCredentials: true,

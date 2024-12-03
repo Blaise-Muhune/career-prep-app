@@ -1,5 +1,4 @@
 import { prisma } from './config/prisma.js';
-import { openai } from './config/openai.js';
 
 export default async function handler(req, res) {
     const { userId } = req.body;
