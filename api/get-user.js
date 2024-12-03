@@ -1,7 +1,11 @@
 import { prisma } from './config/prisma.js';
 
 export default async function handler(req, res) {
-    const userId = req.params.id;
+    const userId = req.query.userId;
+    
+    if (!userId) {
+        return res.status(400).json({ error: 'User ID is required' });
+    }
     
     try {
       const user = await prisma.user.findUnique({
@@ -13,7 +17,7 @@ export default async function handler(req, res) {
             },
           },
           tasks: {
-            where: { completed: false }, // Only get incomplete tasks
+            where: { completed: false },
             orderBy: { dueDate: 'asc' },
           },
           stepProgress: {
