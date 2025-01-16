@@ -34,7 +34,7 @@ export default function NotificationsPage() {
         }
 
         const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://career-prep-app.vercel.app'
-        const response = await axios.get(`${API_BASE_URL}/api/get-notifications`, {
+        const response = await axios.get(`/api/get-notifications`, {
           params: { userId: currentUser.uid }
         })
         setNotifications(response.data)
@@ -58,7 +58,7 @@ export default function NotificationsPage() {
         if (!notification.read) {
           const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://career-prep-app.vercel.app';
           await axios.post(
-            `${API_BASE_URL}/api/read-notification/${notification.id}`,
+            `/api/read-notification/${notification.id}`,
             {},
             { withCredentials: true }
           );
@@ -80,7 +80,7 @@ export default function NotificationsPage() {
   const markAsRead = async (id: number) => {
     try {
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://career-prep-app.vercel.app'
-      await axios.post(`${API_BASE_URL}/api/read-notification/${id}`, {}, 
+      await axios.post(`/api/read-notification/${id}`, {}, 
         { withCredentials: true }
       )
       setNotifications(notifications.map(notif => 
@@ -94,7 +94,7 @@ export default function NotificationsPage() {
   const deleteNotification = async (id: number) => {
     try {
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://career-prep-app.vercel.app'
-      await axios.delete(`${API_BASE_URL}/api/delete-notification/${id}`, 
+      await axios.delete(`/api/delete-notification/${id}`, 
         { withCredentials: true }
       )
       setNotifications(notifications.filter(notif => notif.id !== id))

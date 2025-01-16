@@ -25,7 +25,7 @@ export default function CancelSubscription() {
       }
 
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://career-prep-app.vercel.app';
-      const response = await axios.post(`${API_BASE_URL}/api/cancel-subscription`, {
+      const response = await axios.post(`/api/cancel-subscription`, {
         userId: user.uid
       });
 

@@ -79,7 +79,7 @@ export default function Home() {
 
       // Create user
       const response = await axios.post(
-        `${API_BASE_URL}/api/create-user`, 
+        `/api/create-user`, 
         userData,
         { 
           headers: {
@@ -89,6 +89,9 @@ export default function Home() {
       );
 
       console.log('User creation response:', response.data);
+
+      // Add a small delay to ensure database consistency
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       console.log('All data saved successfully');
       router.push('/dashboard');

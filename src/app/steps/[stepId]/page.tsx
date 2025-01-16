@@ -29,6 +29,8 @@ export default function StepDetailPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('Current stepId from params:', stepId);
+    
     const fetchStepData = async () => {
       try {
         const currentUser = auth.currentUser;
@@ -37,10 +39,28 @@ export default function StepDetailPage() {
           return;
         }
 
-        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://career-prep-app.vercel.app';
-        const response = await axios.get(`${API_BASE_URL}/api/steps/${stepId}`, {
+        // First check if user has a career analysis
+        try {
+          const analysisResponse = await axios.get('/api/career-analysis', {
+            params: { userId: currentUser.uid }
+          });
+          
+          if (!analysisResponse.data) {
+            console.log('No career analysis found, redirecting to create one');
+            router.push('/career-analysis');
+            return;
+          }
+        } catch (error) {
+          console.error('Error checking career analysis:', error);
+          router.push('/career-analysis');
+          return;
+        }
+
+        // Then proceed with fetching step data
+        const response = await axios.get(`/api/steps/${stepId}`, {
           params: { userId: currentUser.uid }
         });
+        
         setStepData(response.data);
       } catch (err) {
         console.error('Error fetching step data:', err);
@@ -61,12 +81,12 @@ export default function StepDetailPage() {
       }
 
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://career-prep-app.vercel.app';
-      await axios.post(`${API_BASE_URL}/api/start-step/${stepId}`, {
+      await axios.post(`/api/start-step/${stepId}`, {
         userId: currentUser.uid
       });
       
       // Refresh step data after starting
-      const response = await axios.get(`${API_BASE_URL}/api/steps/${stepId}`, {
+      const response = await axios.get(`/api/steps/${stepId}`, {
         params: { userId: currentUser.uid }
       });
       setStepData(response.data);

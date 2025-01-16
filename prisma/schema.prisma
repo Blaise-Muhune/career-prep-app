@@ -90,9 +90,24 @@ model Task {
 model CareerAnalysis {
   id        Int      @id @default(autoincrement())
   userId    String
-  analysis  String   // JSON string
-  timestamp DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id])
+  steps     Step[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Step {
+  id              Int            @id @default(autoincrement())
+  title           String
+  description     String
+  timeframe       String
+  priority        String
+  status          String         @default("NOT_STARTED")
+  timelineProgress Float         @default(0)
+  startedAt       DateTime?
+  completedAt     DateTime?
+  careerAnalysis  CareerAnalysis @relation(fields: [analysisId], references: [id])
+  analysisId      Int
 }
 
 model StepProgress {

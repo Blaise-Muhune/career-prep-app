@@ -31,11 +31,11 @@ export default function RootLayout({
       <head />
       <body>
         <ThemeProvider>
-          <body
+          <div
             className={`${geistSans.variable} ${geistMono.variable} antialiased`}
           >
             <AuthGuard>{children}</AuthGuard>
-          </body>
+          </div>
         </ThemeProvider>
         <Toaster position="bottom-right" />
       </body>

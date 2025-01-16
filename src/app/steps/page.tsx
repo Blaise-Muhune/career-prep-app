@@ -50,7 +50,7 @@ export default function StepsPage() {
         }
 
         const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://career-prep-app.vercel.app/';
-        const response = await axios.post(`${API_BASE_URL}/api/career-analysis`, {
+        const response = await axios.post(`/api/career-analysis`, {
           userId: user.uid
         }, {
           withCredentials: true

@@ -170,7 +170,7 @@ const PricingHeader = ({ title, subtitle }: { title: string; subtitle: string })
 
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://career-prep-app.vercel.app';
       
-      const { data } = await axios.post(`${API_BASE_URL}/api/create-checkout-session`, {
+      const { data } = await axios.post(`/api/create-checkout-session`, {
         userId: user.uid,
         email: user.email,
         priceId,

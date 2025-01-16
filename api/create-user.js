@@ -41,9 +41,12 @@ export default async function handler(req, res) {
         where: { email }
       });
   
+      // Add debug logging for the user creation/update
+      console.log('Creating/updating user with ID:', id);
+  
       let user;
       if (existingUser) {
-        // Update existing user
+        console.log('Updating existing user:', existingUser.id);
         user = await prisma.user.update({
           where: { id: existingUser.id },
           data: {
@@ -52,7 +55,7 @@ export default async function handler(req, res) {
           }
         });
       } else {
-        // Create new user
+        console.log('Creating new user with ID:', id);
         user = await prisma.user.create({
           data: {
             id,
@@ -62,6 +65,9 @@ export default async function handler(req, res) {
           }
         });
       }
+  
+      // Log the created/updated user
+      console.log('User after creation/update:', user);
   
       // Handle profile
       const profile = await prisma.profile.upsert({

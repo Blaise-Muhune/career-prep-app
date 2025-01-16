@@ -93,7 +93,7 @@ export default function SubscriptionPage() {
 
       // Here you would typically make an API call to update the user's subscription
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://career-prep-app.vercel.app';
-      await axios.post(`${API_BASE_URL}/api/update-subscription`, {
+      await axios.post(`/api/update-subscription`, {
         userId: user.uid,
         planId: tier.planId
       }, {

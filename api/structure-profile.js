@@ -35,7 +35,8 @@ export default async function handler(req, res) {
 
 async function handleRequest(req) {
     const { userId } = req.body;
-    
+    console.log('Analyzing career for userId:', userId);
+
     // Check for recent analysis first
     const recentAnalysis = await prisma.careerAnalysis.findFirst({
         where: {
@@ -65,8 +66,10 @@ async function handleRequest(req) {
       }
     });
 
+    console.log('Found user data:', userData ? 'yes' : 'no', userData?.id);
+
     if (!userData) {
-      return res.status(404).json({ error: 'User not found' });
+        throw new Error('User not found');
     }
 
     // Calculate progress with null checks
