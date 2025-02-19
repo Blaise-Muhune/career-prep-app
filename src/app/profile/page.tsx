@@ -56,8 +56,10 @@ export default function ProfilePage() {
           return;
         }
 
-        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://career-prep-app.vercel.app';
-        const response = await axios.get(`/api/get-user/${currentUser.uid}`);
+        const response = await axios.get('/api/get-user', {
+          params: { userId: currentUser.uid },
+          withCredentials: true
+        });
         setUser(response.data);
       } catch (error) {
         console.error('Error fetching profile:', error);
@@ -97,14 +99,17 @@ export default function ProfilePage() {
         return;
       }
 
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://career-prep-app.vercel.app';
-      await axios.put(`/api/update-user/${currentUser.uid}`, {
+      await axios.post('/api/create-user', {
+        id: currentUser.uid,
+        email: user.email,
         name: user.name,
         bio: user.profile.bio,
         skills: user.profile.skills.map(s => s.name),
         dreamJob: user.profile.dreamJob,
         dreamCompany: user.profile.dreamCompany,
         dreamSalary: user.profile.dreamSalary
+      }, {
+        withCredentials: true
       });
 
       setIsEditing(false);

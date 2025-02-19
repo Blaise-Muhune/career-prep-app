@@ -8,6 +8,8 @@ import { Bell, CheckCircle, AlertCircle, Trash2, MailOpen, ArrowLeft, Loader2 } 
 import { auth } from '../../firebaseConfig'
 import { useRouter } from 'next/navigation'
 import { Badge } from "@/components/ui/badge"
+import { formatDistanceToNow } from 'date-fns'
+import { cn } from "@/lib/utils"
 
 type Notification = {
   id: number
@@ -33,21 +35,27 @@ export default function NotificationsPage() {
           return;
         }
 
-        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://career-prep-app.vercel.app'
-        const response = await axios.get(`/api/get-notifications`, {
-          params: { userId: currentUser.uid }
-        })
-        setNotifications(response.data)
-      } catch (err) {
-        console.error('Error fetching notifications:', err)
-        setError('Failed to load notifications.')
-      } finally {
-        setLoading(false)
-      }
-    }
+        const response = await axios.get('/api/get-notifications', {
+          params: { userId: currentUser.uid },
+          withCredentials: true
+        });
 
-    fetchNotifications()
-  }, [router])
+        if (Array.isArray(response.data)) {
+          setNotifications(response.data);
+        } else {
+          console.warn('Notifications data is not an array:', response.data);
+          setNotifications([]);
+        }
+      } catch (err) {
+        console.error('Error fetching notifications:', err);
+        setError('Failed to load notifications.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNotifications();
+  }, [router]);
 
   const handleNotificationClick = async (notification: Notification) => {
     try {
@@ -105,8 +113,6 @@ export default function NotificationsPage() {
 
   const getNotificationIcon = (type: string) => {
     switch (type) {
-      case 'info':
-        return <Bell className="h-5 w-5 text-blue-500" />;
       case 'success':
         return <CheckCircle className="h-5 w-5 text-green-500" />;
       case 'warning':
@@ -164,74 +170,31 @@ export default function NotificationsPage() {
               <p className="text-sm">We&apos;ll notify you when there are updates</p>
             </div>
           ) : (
-            <ul className="space-y-4">
-              {notifications.map((notif) => (
-                <li 
-                  key={notif.id} 
-                  onClick={() => notif.stepId && handleNotificationClick(notif)}
-                  className={`
-                    relative group rounded-lg border
-                    ${notif.read ? 'bg-muted/50' : 'bg-card'}
-                    ${notif.stepId ? 'cursor-pointer hover:shadow-md' : ''}
-                    transition-all duration-200
-                  `}
+            <div className="space-y-4">
+              {notifications.map((notification) => (
+                <Card 
+                  key={notification.id}
+                  className={cn(
+                    "transition-all duration-200 hover:shadow-md",
+                    !notification.read && "bg-accent/20"
+                  )}
                 >
-                  <div className="p-4 flex items-start gap-4">
-                    <div className="p-2 rounded-full bg-primary/10">
-                      {getNotificationIcon(notif.type)}
-                    </div>
-                    
-                    <div className="flex-grow space-y-1">
-                      <p className={`${notif.read ? 'text-muted-foreground' : 'font-medium'}`}>
-                        {notif.message}
-                      </p>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <time dateTime={notif.date}>
-                          {new Date(notif.date).toLocaleDateString(undefined, {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                          })}
-                        </time>
-                        {notif.stepId && (
-                          <Badge variant="outline" className="ml-2">
-                            View Step Details
-                          </Badge>
-                        )}
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-4">
+                      <div className="mt-1">
+                        {getNotificationIcon(notification.type)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-muted-foreground">
+                          {formatDistanceToNow(new Date(notification.date), { addSuffix: true })}
+                        </p>
+                        <p className="mt-1">{notification.message}</p>
                       </div>
                     </div>
-
-                    <div className="flex items-center gap-2">
-                      {!notif.read && (
-                        <Button 
-                          variant="ghost"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            markAsRead(notif.id);
-                          }}
-                          className="hover:bg-primary/10"
-                        >
-                          <MailOpen className="h-4 w-4 mr-2" />
-                          Mark Read
-                        </Button>
-                      )}
-                      <Button 
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteNotification(notif.id);
-                        }}
-                        className="hover:bg-destructive/10 hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </li>
+                  </CardContent>
+                </Card>
               ))}
-            </ul>
+            </div>
           )}
         </CardContent>
       </Card>

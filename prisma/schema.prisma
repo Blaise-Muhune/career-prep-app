@@ -1,7 +1,6 @@
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
-  directUrl = env("POSTGRES_URL_NON_POOLING")
+  url      = env("POSTGRES_URL")
 }
 
 generator client {
@@ -92,6 +91,7 @@ model CareerAnalysis {
   userId    String
   user      User     @relation(fields: [userId], references: [id])
   steps     Step[]
+  analysis  String   @db.Text
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -108,6 +108,21 @@ model Step {
   completedAt     DateTime?
   careerAnalysis  CareerAnalysis @relation(fields: [analysisId], references: [id])
   analysisId      Int
+  resources       Resource[]
+}
+
+model Resource {
+  id          Int      @id @default(autoincrement())
+  name        String
+  url         String?
+  description String
+  type        String   // article/video/podcast/book/course/etc.
+  category    String
+  tags        String
+  isFree      Boolean  @default(true)
+  isPremium   Boolean  @default(false)
+  step        Step     @relation(fields: [stepId], references: [id])
+  stepId      Int
 }
 
 model StepProgress {

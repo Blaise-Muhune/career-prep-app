@@ -14,30 +14,65 @@ import {
   AlertTriangle,
   ChevronRight,
   Target,
-  ArrowUpRight
+  ArrowUpRight,
+  GraduationCap,
+  BookOpen,
+  Rocket,
+  Calendar,
+  AlertCircle
 } from 'lucide-react'
 import { auth } from "@/firebaseConfig"
 import { useRouter } from 'next/navigation'
 import { Badge } from "@/components/ui/badge"
+import Link from 'next/link'
+import { formatDistanceToNow } from 'date-fns'
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
+import { Loader2 } from 'lucide-react'
 
 interface CareerAnalysis {
   progressPercentage: number;
-  tasks: Array<{
+  steps: Array<{
+    id: number;
+    analysisId: number;
     title: string;
     description: string;
     timeframe: string;
     priority: string;
-  }>;
-  nextSteps: Array<{
-    step: string;
-    reason: string;
+    status: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
+    startedAt: string | null;
+    progress: {
+      status: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
+      startedAt: string | null;
+    };
+    resources: Array<{
+      name: string;
+      url?: string;
+      description: string;
+      type: string;
+      category: string;
+      tags: string;
+      isFree: boolean;
+      isPremium: boolean;
+    }>;
   }>;
   analysis: string;
+  progressBreakdown: {
+    preexistingExperience: number;
+    appProgress: number;
+    totalProgress: number;
+  };
+}
+
+interface UserData {
+  dreamJob?: string;
 }
 
 export default function StepsPage() {
   const [careerAnalysis, setCareerAnalysis] = useState<CareerAnalysis | null>(null);
+  const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState('all');
   const router = useRouter();
 
   useEffect(() => {
@@ -84,23 +119,61 @@ export default function StepsPage() {
     );
   };
 
+  const getPriorityColor = (priority: string) => {
+    const colors = {
+      high: "bg-red-500/10 text-red-500 border-red-500/20",
+      medium: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
+      low: "bg-green-500/10 text-green-500 border-green-500/20"
+    };
+    return colors[priority as keyof typeof colors];
+  };
+
+  const DualProgressBar = ({ preexisting, appProgress, className }: { 
+    preexisting: number; 
+    appProgress: number; 
+    className?: string;
+  }) => {
+    const preexistingWidth = Math.min(Math.round(preexisting || 0), 100);
+    const appProgressWidth = Math.min(Math.round(appProgress || 0), 100 - preexistingWidth);
+
+    return (
+      <div className={`relative h-2 w-full overflow-hidden rounded-full bg-muted ${className}`}>
+        {preexistingWidth > 0 && (
+          <div 
+            className="absolute left-0 h-full bg-blue-500 transition-all duration-300"
+            style={{ width: `${preexistingWidth}%` }}
+          />
+        )}
+        {appProgressWidth > 0 && (
+          <div 
+            className="absolute h-full bg-green-500 transition-all duration-300"
+            style={{ 
+              left: `${preexistingWidth}%`,
+              width: `${appProgressWidth}%` 
+            }}
+          />
+        )}
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="container mx-auto p-4 min-h-[60vh] flex items-center justify-center">
         <div className="animate-pulse flex flex-col items-center gap-4">
-          <RefreshCcw className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-lg font-medium">Loading your career journey...</p>
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-lg font-medium">Loading your career steps...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-4 max-w-5xl">
+    <div className="container mx-auto p-4">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-4xl font-bold">Your Career Journey</h1>
-          <p className="text-muted-foreground mt-2">Track your progress and next steps</p>
+          <h1 className="text-4xl font-bold">Career Steps</h1>
+          <p className="text-muted-foreground mt-2">Track your progress and complete career milestones</p>
         </div>
         <Button 
           variant="outline"
@@ -111,118 +184,149 @@ export default function StepsPage() {
           Dashboard
         </Button>
       </div>
-      
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Target className="h-5 w-5 text-primary" />
-            Overall Progress
-          </CardTitle>
-          <CardDescription>Track your progress towards your dream job</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="bg-accent/50 p-6 rounded-lg">
-            <Progress 
-              value={careerAnalysis?.progressPercentage} 
-              className="h-3 mb-4" 
-            />
-            <p className="text-center font-semibold text-lg mb-4">
-              {Math.round(careerAnalysis?.progressPercentage || 0)}% Complete
-            </p>
-            <p className="text-muted-foreground text-center">
-              {careerAnalysis?.analysis}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
 
-      <div className="space-y-6 mb-8">
-        <h2 className="text-2xl font-semibold">Career Steps</h2>
-        {careerAnalysis?.tasks.map((task, index) => (
-          <Card 
-            key={index} 
-            className="hover:shadow-lg transition-all duration-200 group cursor-pointer"
-            onClick={() => handleStepClick(index)}
-          >
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="p-2 rounded-full bg-primary/10">
-                      {index === 0 ? (
-                        <CheckCircle className="h-5 w-5 text-primary" />
-                      ) : (
-                        <Circle className="h-5 w-5 text-muted-foreground" />
-                      )}
+      {loading ? (
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="text-lg font-medium">Loading your career steps...</p>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-8">
+          {/* Progress Overview */}
+          <Card className="bg-gradient-to-br from-background to-accent/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Target className="h-6 w-6 text-primary" />
+                Progress Overview
+              </CardTitle>
+              <CardDescription>Your journey to becoming a {userData?.dreamJob || 'professional'}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 rounded-lg bg-accent/50 space-y-2">
+                    <div className="flex items-center gap-2 text-primary">
+                      <GraduationCap className="h-5 w-5" />
+                      <span className="font-medium">Experience</span>
                     </div>
-                    <h3 className="font-semibold text-lg group-hover:text-primary transition-colors">
-                      {task.title}
-                    </h3>
+                    <p className="text-2xl font-bold">
+                      {Math.round(careerAnalysis?.progressBreakdown?.preexistingExperience || 0)}%
+                    </p>
                   </div>
-                  <p className="text-muted-foreground ml-11">{task.description}</p>
-                  
-                  <div className="flex items-center gap-4 mt-4 ml-11">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Clock className="h-4 w-4" />
-                      {task.timeframe}
+                  <div className="p-4 rounded-lg bg-accent/50 space-y-2">
+                    <div className="flex items-center gap-2 text-primary">
+                      <BookOpen className="h-5 w-5" />
+                      <span className="font-medium">App Progress</span>
                     </div>
-                    {getPriorityBadge(task.priority)}
+                    <p className="text-2xl font-bold">
+                      {Math.round(careerAnalysis?.progressBreakdown?.appProgress || 0)}%
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-lg bg-accent/50 space-y-2">
+                    <div className="flex items-center gap-2 text-primary">
+                      <Rocket className="h-5 w-5" />
+                      <span className="font-medium">Total Progress</span>
+                    </div>
+                    <p className="text-2xl font-bold">
+                      {Math.round(careerAnalysis?.progressBreakdown?.totalProgress || 0)}%
+                    </p>
                   </div>
                 </div>
-                
-                <Button 
-                  variant="ghost" 
-                  className="group-hover:translate-x-1 transition-transform"
-                >
-                  <ArrowUpRight className="h-5 w-5" />
-                </Button>
+
+                <div className="space-y-4">
+                  <DualProgressBar 
+                    preexisting={Number(careerAnalysis?.progressBreakdown?.preexistingExperience) || 0}
+                    appProgress={Number(careerAnalysis?.progressBreakdown?.appProgress) || 0}
+                    className="h-4"
+                  />
+                </div>
               </div>
             </CardContent>
           </Card>
-        ))}
-      </div>
 
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-semibold">Recommended Next Steps</h2>
-          <Button 
-            variant="outline"
-            onClick={() => router.push('/steps/next-steps')}
-            className="flex items-center gap-2"
-          >
-            View All
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {careerAnalysis?.nextSteps.slice(0, 4).map((step, index) => (
-            <Card 
-              key={index}
-              className="hover:shadow-lg transition-all duration-200 cursor-pointer"
-              onClick={() => router.push(`/steps/next/${index + 1}`)}
-            >
-              <CardContent className="p-6">
-                <h3 className="font-medium flex items-center gap-2 mb-2">
-                  <AlertTriangle className="h-4 w-4 text-primary" />
-                  {step.step}
-                </h3>
-                <p className="text-sm text-muted-foreground">{step.reason}</p>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
+          {/* Steps List */}
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-semibold">Your Steps</h2>
+              <Select 
+                value={filter} 
+                onValueChange={setFilter}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Steps</SelectItem>
+                  <SelectItem value="not_started">Not Started</SelectItem>
+                  <SelectItem value="in_progress">In Progress</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-      <div className="mt-8 flex justify-end">
-        <Button 
-          onClick={() => router.push('/steps/refresh')}
-          className="flex items-center gap-2"
-        >
-          <RefreshCcw className="h-4 w-4" />
-          Refresh Analysis
-        </Button>
-      </div>
+            <div className="grid gap-4">
+              {careerAnalysis?.steps?.map((step, index) => (
+                <Link href={`/steps/${step.id}`} key={step.title}>
+                  <Card className="hover:shadow-md transition-all duration-200">
+                    <CardContent className="p-6">
+                      <div className="flex items-start gap-4">
+                        <div className="flex-shrink-0">
+                          {(step.progress?.status || step.status) === 'COMPLETED' && (
+                            <div className="p-2 rounded-full bg-green-500/20">
+                              <CheckCircle className="h-6 w-6 text-green-500" />
+                            </div>
+                          )}
+                          {(step.progress?.status || step.status) === 'IN_PROGRESS' && (
+                            <div className="p-2 rounded-full bg-blue-500/20">
+                              <Clock className="h-6 w-6 text-blue-500" />
+                            </div>
+                          )}
+                          {(step.progress?.status || step.status) === 'NOT_STARTED' && (
+                            <div className="p-2 rounded-full bg-muted">
+                              <Circle className="h-6 w-6 text-muted-foreground" />
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-4">
+                            <div>
+                              <h3 className="font-semibold text-lg">{step.title}</h3>
+                              <p className="text-muted-foreground mt-1 line-clamp-2">
+                                {step.description}
+                              </p>
+                            </div>
+                            <Badge className={getPriorityColor(step.priority)}>
+                              {step.priority.toUpperCase()}
+                            </Badge>
+                          </div>
+
+                          <div className="flex items-center gap-4 mt-4">
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Clock className="h-4 w-4" />
+                              {step.timeframe}
+                            </div>
+                            {(step.progress?.startedAt || step.startedAt) && (
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <Calendar className="h-4 w-4" />
+                                Started {formatDistanceToNow(new Date(step.progress?.startedAt || step.startedAt || new Date()), { addSuffix: true })}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

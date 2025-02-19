@@ -42,7 +42,7 @@ interface UserSettings {
 interface Subscription {
   status: string;
   plan: string;
-  currentPeriodEnd: string;
+  currentPeriodEnd: string | null;
   cancelAtPeriodEnd: boolean;
 }
 
@@ -74,21 +74,47 @@ export default function SettingsPage() {
           return;
         }
 
-        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://career-prep-app.vercel.app';
-        const response = await axios.get(`/api/get-user/${currentUser.uid}`);
-        
+        // Fetch user data first
+        const userResponse = await axios.get('/api/get-user', {
+          params: { userId: currentUser.uid },
+          withCredentials: true
+        });
+
+        // Ensure preferences are properly initialized
         const userData = {
-          ...response.data,
+          ...userResponse.data,
           preferences: {
             ...defaultPreferences,
-            ...response.data.preferences
+            ...(userResponse.data.preferences || {})
           }
         };
         
         setSettings(userData);
         
-        if (userData.preferences?.theme) {
-          setTheme(userData.preferences.theme);
+        // Set theme from preferences or localStorage
+        const savedTheme = localStorage.getItem('theme') || userData.preferences?.theme || 'system';
+        setTheme(savedTheme);
+        
+        // Update localStorage with the current theme
+        localStorage.setItem('theme', savedTheme);
+
+        // Fetch subscription data separately to handle errors gracefully
+        try {
+          const subscriptionResponse = await axios.get('/api/get-subscription', {
+            params: { userId: currentUser.uid },
+            withCredentials: true
+          });
+          setSubscription(subscriptionResponse.data);
+        } catch (subError) {
+          console.error('Error fetching subscription:', subError);
+          setSubscription({
+            status: 'inactive',
+            plan: 'Free',
+            currentPeriodEnd: null,
+            cancelAtPeriodEnd: false
+          } as Subscription);
+        } finally {
+          setSubscriptionLoading(false);
         }
       } catch (error) {
         console.error('Error fetching settings:', error);
@@ -101,80 +127,70 @@ export default function SettingsPage() {
     fetchSettings();
   }, [router, setTheme]);
 
-  // Fetch subscription data
-  useEffect(() => {
-    const fetchSubscription = async () => {
-      try {
-        const currentUser = auth.currentUser;
-        if (!currentUser) return;
-
-        const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://career-prep-app.vercel.app';
-        console.log('Fetching subscription for user:', currentUser.uid);
-        
-        const response = await axios.get(`/api/get-subscription/${currentUser.uid}`);
-        console.log('Subscription response:', response.data);
-        
-        if (response.data) {
-          setSubscription(response.data);
-        }
-      } catch (error) {
-        console.error('Error fetching subscription:', error);
-        // Don't show error toast for subscription - it might not exist
-      } finally {
-        setSubscriptionLoading(false);
-      }
-    };
-
-    fetchSubscription();
-  }, []);
-
   const handleToggleChange = (field: string) => {
-    if (!settings?.preferences) return
-    setSettings(prev => prev ? {
-      ...prev,
-      preferences: {
-        ...prev.preferences,
-        [field]: !prev.preferences[field as keyof typeof prev.preferences]
-      }
-    } : null)
-  }
+    if (!settings?.preferences) return;
+    setSettings(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        preferences: {
+          ...prev.preferences,
+          [field]: !prev.preferences[field as keyof typeof prev.preferences]
+        }
+      };
+    });
+  };
 
   const handleThemeChange = (theme: string) => {
-    if (!settings?.preferences) return
-    setSettings(prev => prev ? {
-      ...prev,
-      preferences: {
-        ...prev.preferences,
-        theme: theme as 'light' | 'dark' | 'system'
-      }
-    } : null)
-    setTheme(theme as 'light' | 'dark' | 'system')
-  }
+    if (!settings?.preferences) return;
+    
+    // Update local state
+    setSettings(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        preferences: {
+          ...prev.preferences,
+          theme: theme as 'light' | 'dark' | 'system'
+        }
+      };
+    });
+
+    // Update theme in UI and localStorage
+    setTheme(theme as 'light' | 'dark' | 'system');
+    localStorage.setItem('theme', theme);
+  };
 
   const handleTimeZoneChange = (timezone: string) => {
-    if (!settings?.preferences) return
-    setSettings(prev => prev ? {
-      ...prev,
-      preferences: {
-        ...prev.preferences,
-        timeZone: timezone
-      }
-    } : null)
-  }
+    if (!settings?.preferences) return;
+    setSettings(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        preferences: {
+          ...prev.preferences,
+          timeZone: timezone
+        }
+      };
+    });
+  };
 
   const handleSave = async () => {
     try {
       if (!settings) return;
       
       setLoading(true);
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://career-prep-app.vercel.app';
       
       const response = await axios.put(`/api/user-preferences/${settings.id}`, {
         preferences: settings.preferences
       });
 
       if (response.status === 200) {
-        setTheme(settings.preferences?.theme || 'system');
+        // Update theme after successful save
+        const theme = settings.preferences?.theme || 'system';
+        setTheme(theme);
+        localStorage.setItem('theme', theme);
+        
         toast.success('Settings saved successfully!', {
           description: 'Your preferences have been updated.'
         });
@@ -383,7 +399,7 @@ export default function SettingsPage() {
             <div className="space-y-2">
               <h3 className="font-medium">Current Plan</h3>
               <p className="text-2xl font-bold">{subscription.plan}</p>
-              {subscription.cancelAtPeriodEnd && (
+              {subscription.cancelAtPeriodEnd && subscription.currentPeriodEnd && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Clock className="h-4 w-4" />
                   <span>Cancels on {new Date(subscription.currentPeriodEnd).toLocaleDateString()}</span>
@@ -393,10 +409,17 @@ export default function SettingsPage() {
 
             <div className="space-y-2">
               <h3 className="font-medium">Billing</h3>
-              <div className="flex items-center gap-2">
-                <CreditCard className="h-4 w-4" />
-                <span>Next billing date: {new Date(subscription.currentPeriodEnd).toLocaleDateString()}</span>
-              </div>
+              {subscription.currentPeriodEnd ? (
+                <div className="flex items-center gap-2">
+                  <CreditCard className="h-4 w-4" />
+                  <span>Next billing date: {new Date(subscription.currentPeriodEnd).toLocaleDateString()}</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <CreditCard className="h-4 w-4" />
+                  <span>No active subscription</span>
+                </div>
+              )}
             </div>
           </CardContent>
 

@@ -41,12 +41,12 @@ async function handleRequest(req) {
     const recentAnalysis = await prisma.careerAnalysis.findFirst({
         where: {
             userId,
-            timestamp: {
+            createdAt: {
                 gte: new Date(Date.now() - 24 * 60 * 60 * 1000)
             }
         },
         orderBy: {
-            timestamp: 'desc'
+            createdAt: 'desc'
         }
     });
 
@@ -142,12 +142,24 @@ async function handleRequest(req) {
     const response = JSON.parse(completion.choices[0].message.content);
 
     // Save the analysis
-    await prisma.careerAnalysis.create({
+    const careerAnalysis = await prisma.careerAnalysis.create({
       data: {
         userId,
         analysis: JSON.stringify(response),
-        timestamp: new Date(),
+        steps: {
+          create: response.tasks.map(task => ({
+            title: task.title,
+            description: task.description,
+            timeframe: task.timeframe,
+            priority: task.priority,
+            status: "NOT_STARTED",
+            timelineProgress: 0
+          }))
+        }
       },
+      include: {
+        steps: true
+      }
     });
 
     return response;
