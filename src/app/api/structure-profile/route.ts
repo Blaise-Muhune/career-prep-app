@@ -63,12 +63,37 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
         const { userId } = body;
 
-        // Validate userId
-        if (!userId || typeof userId !== 'string') {
-            return NextResponse.json({ 
-                error: 'Invalid or missing userId',
-                details: 'A valid user ID is required'
-            }, { status: 400 });
+        if (!userId) {
+            return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
+        }
+
+        // Get user data with proper null checks
+        const userData = await prisma.user.findUnique({
+            where: { id: userId },
+            include: {
+                profile: {
+                    include: {
+                        skills: true
+                    }
+                },
+                tasks: true,
+                stepProgress: true,
+                careerAnalyses: {
+                    include: {
+                        steps: true
+                    },
+                    orderBy: {
+                        createdAt: 'desc'
+                    },
+                    take: 1
+                }
+            }
+        });
+
+        console.log('Found user data:', userData ? 'yes' : 'no', userData?.id);
+
+        if (!userData) {
+            return NextResponse.json({ error: 'User not found' }, { status: 404 });
         }
 
         // Check for recent analysis first
@@ -81,31 +106,16 @@ export async function POST(request: NextRequest) {
             },
             orderBy: {
                 createdAt: 'desc'
+            },
+            include: {
+                steps: true
             }
         });
 
         if (recentAnalysis) {
-            return NextResponse.json(JSON.parse(recentAnalysis.analysis));
-        }
-
-        // Get user data with proper null checks
-        const userData = await prisma.user.findUnique({
-            where: { id: userId },
-            include: {
-                profile: {
-                    include: {
-                        skills: true
-                    }
-                },
-                tasks: true
-            }
-        });
-
-        if (!userData) {
-            return NextResponse.json({ 
-                error: 'User not found',
-                details: `No user found with ID: ${userId}`
-            }, { status: 404 });
+            // Return the stored analysis with its progress data
+            const storedAnalysis = JSON.parse(recentAnalysis.analysis);
+            return NextResponse.json(storedAnalysis);
         }
 
         const bio = userData.profile?.bio || 'Not provided';
@@ -236,8 +246,32 @@ export async function POST(request: NextRequest) {
         if (!completion.choices[0].message.content) {
             return NextResponse.json({
                 error: "Failed to generate analysis",
-                details: "OpenAI API did not return expected content"
-            }, { status: 500 });
+                progressPercentage: {
+                    "technical-proficiency": 0,
+                    "domain-adaptation": 0,
+                    "future-readiness": 0,
+                    "network-strength": 0
+                },
+                aiRoadmap: [],
+                trendAnalysis: {
+                    emergingTechnologies: [],
+                    atRiskSkills: [],
+                    crossTraining: [],
+                    industryOpportunities: []
+                },
+                certificationPath: [],
+                projectRecommendations: [],
+                communityStrategy: {
+                    networkingTargets: [],
+                    contributionOpportunities: [],
+                    mentorshipRecommendations: []
+                },
+                riskAssessment: {
+                    automationThreat: "low",
+                    skillDecay: "none",
+                    marketCompetition: "unknown"
+                }
+            });
         }
 
         const response = JSON.parse(completion.choices[0].message.content);
@@ -356,20 +390,35 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(response);
     } catch (error: unknown) {
         console.error('Error in career analysis:', error);
-        
-        // Handle Prisma-specific errors
-        if (error instanceof Error) {
-            if (error.message.includes('prisma')) {
-                return NextResponse.json({
-                    error: 'Database error',
-                    details: error.message
-                }, { status: 500 });
-            }
-        }
-        
-        return NextResponse.json({ 
+        return NextResponse.json({
             error: 'Failed to generate analysis',
-            details: error instanceof Error ? error.message : 'Unknown error'
+            details: error instanceof Error ? error.message : 'Unknown error',
+            progressPercentage: {
+                "technical-proficiency": 0,
+                "domain-adaptation": 0,
+                "future-readiness": 0,
+                "network-strength": 0
+            },
+            totalProgress: 0,
+            aiRoadmap: [],
+            trendAnalysis: {
+                emergingTechnologies: [],
+                atRiskSkills: [],
+                crossTraining: [],
+                industryOpportunities: []
+            },
+            certificationPath: [],
+            projectRecommendations: [],
+            communityStrategy: {
+                networkingTargets: [],
+                contributionOpportunities: [],
+                mentorshipRecommendations: []
+            },
+            riskAssessment: {
+                automationThreat: "low",
+                skillDecay: "none",
+                marketCompetition: "unknown"
+            }
         }, { status: 500 });
     }
 } 
