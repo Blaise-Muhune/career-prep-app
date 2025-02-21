@@ -27,22 +27,14 @@ interface StepResource extends Resource {
     timeCommitment?: string;
 }
 
-type RouteContext = {
-    params: {
-        stepId: string;
-    };
-};
-
 export async function GET(
     request: NextRequest,
-    context: RouteContext
+    { params }: { params: { stepId: string } }
 ) {
     try {
         const searchParams = request.nextUrl.searchParams;
         const userId = searchParams.get('userId');
-        const params = await context.params;
-        const { stepId } = params;
-        const stepIdNum = parseInt(stepId);
+        const stepIdNum = parseInt(params.stepId);
         
         if (!userId) {
             return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
@@ -102,7 +94,7 @@ export async function GET(
             resources: step.resources.map((resource: StepResource) => ({
                 ...resource,
                 provider: resource.provider || 'General',
-                level: resource.level || 'Beginner',
+                level: resource.level || 'beginner',
                 aiRelevance: resource.aiRelevance || 'foundational',
                 timeCommitment: resource.timeCommitment || '1-2 hours'
             }))
@@ -118,16 +110,14 @@ export async function GET(
     }
 };
 
-export const PATCH = async (
+export async function PATCH(
     request: NextRequest,
-    context: RouteContext
-) => {
+    { params }: { params: { stepId: string } }
+) {
     try {
         const body = await request.json();
         const { userId, status, timelineProgress } = body;
-        const params = await context.params;
-        const { stepId } = params;
-        const stepIdNum = parseInt(stepId);
+        const stepIdNum = parseInt(params.stepId);
 
         if (!userId) {
             return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
