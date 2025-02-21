@@ -271,29 +271,29 @@ export default function Home() {
           <CardHeader className="px-8 pt-8 pb-6 border-b border-gray-100 dark:border-gray-800">
             <CardTitle className="text-2xl font-medium text-gray-900 dark:text-white">
               Professional Profile
-            </CardTitle>
+          </CardTitle>
             <CardDescription className="text-base text-gray-500 dark:text-gray-400 mt-2">
               Define your career aspirations with clarity and purpose.
-            </CardDescription>
-          </CardHeader>
+          </CardDescription>
+        </CardHeader>
 
           <CardContent className="p-8">
             <form onSubmit={handleSubmit} className="space-y-12">
               {/* Current Status Section */}
               <div className="space-y-6">
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white">Current Status</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
                     <Label htmlFor="currentRole">Current Role</Label>
-                    <Input
+                <Input 
                       id="currentRole"
                       value={formData.currentRole}
-                      onChange={handleChange}
+                  onChange={handleChange} 
                       placeholder="e.g., Junior Developer"
                       className="h-12"
-                    />
-                  </div>
-                  <div className="space-y-2">
+                />
+              </div>
+              <div className="space-y-2">
                     <Label htmlFor="yearsOfExperience">Years of Experience</Label>
                     <Select
                       value={formData.yearsOfExperience}
@@ -308,32 +308,32 @@ export default function Home() {
                         ))}
                       </SelectContent>
                     </Select>
-                  </div>
-                </div>
+              </div>
+              </div>
               </div>
 
               {/* Career Aspirations Section */}
               <div className="space-y-6">
                 <h3 className="text-lg font-medium text-gray-900 dark:text-white">Career Aspirations</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-2">
+              <div className="space-y-2">
                     <Label htmlFor="dreamJob">Dream Position</Label>
-                    <Input
-                      id="dreamJob"
-                      value={formData.dreamJob}
-                      onChange={handleChange}
+                <Input 
+                  id="dreamJob" 
+                  value={formData.dreamJob} 
+                  onChange={handleChange} 
                       className="h-12"
-                      placeholder="e.g., Senior Software Engineer"
-                    />
-                  </div>
-                  <div className="space-y-2">
+                  placeholder="e.g., Senior Software Engineer"
+                />
+              </div>
+              <div className="space-y-2">
                     <Label htmlFor="dreamCompany">Dream Company</Label>
-                    <Input
-                      id="dreamCompany"
-                      value={formData.dreamCompany}
-                      onChange={handleChange}
+                <Input 
+                  id="dreamCompany" 
+                  value={formData.dreamCompany} 
+                  onChange={handleChange} 
                       className="h-12"
-                      placeholder="e.g., Google, Amazon, or startup"
+                  placeholder="e.g., Google, Amazon, or startup"
                     />
                   </div>
                   <div className="space-y-2 md:col-span-2">
@@ -416,7 +416,7 @@ export default function Home() {
                   <div className="space-y-2">
                     <Label>Skills</Label>
                     <div className="flex gap-3">
-                      <Input
+                <Input 
                         value={currentSkill}
                         onChange={(e) => setCurrentSkill(e.target.value)}
                         placeholder="Add a skill"
@@ -542,12 +542,12 @@ export default function Home() {
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
               </div>
+            </div>
 
               {/* Submit Button */}
-              <Button
-                type="submit"
+              <Button 
+                type="submit" 
                 disabled={isSubmitting}
                 className="w-full h-14 bg-gray-900 dark:bg-white text-white dark:text-gray-900 rounded-xl text-lg font-medium hover:opacity-90 transition-all duration-200"
               >
@@ -557,10 +557,10 @@ export default function Home() {
                   'Create Professional Profile'
                 )}
               </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
+          </form>
+        </CardContent>
+      </Card>
+    </div>
 
       {/* Footer */}
       <footer className="py-8 text-center">

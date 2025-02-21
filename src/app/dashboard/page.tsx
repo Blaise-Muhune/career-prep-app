@@ -64,10 +64,10 @@ interface CareerAnalysis {
   totalProgress: number;
   aiRoadmap: Array<{
     category: string;
-    tasks: Array<{
+  tasks: Array<{
       id: number;
-      title: string;
-      description: string;
+    title: string;
+    description: string;
       urgency: string;
       priority: string;
       skillType: string;
@@ -146,20 +146,20 @@ function DualProgressBar({
     <div className={cn("relative h-2 w-full overflow-hidden rounded-full bg-muted", className)}>
       {/* Preexisting Experience Bar */}
       {preexistingWidth > 0 && (
-        <div 
-          className="absolute left-0 h-full bg-blue-500 transition-all duration-300"
-          style={{ width: `${preexistingWidth}%` }}
-        />
+      <div 
+        className="absolute left-0 h-full bg-blue-500 transition-all duration-300"
+        style={{ width: `${preexistingWidth}%` }}
+      />
       )}
       {/* App Progress Bar */}
       {appProgressWidth > 0 && (
-        <div 
-          className="absolute h-full bg-green-500 transition-all duration-300"
-          style={{ 
-            left: `${preexistingWidth}%`,
-            width: `${appProgressWidth}%` 
-          }}
-        />
+      <div 
+        className="absolute h-full bg-green-500 transition-all duration-300"
+        style={{ 
+          left: `${preexistingWidth}%`,
+          width: `${appProgressWidth}%` 
+        }}
+      />
       )}
     </div>
   );
@@ -401,8 +401,8 @@ export default function DashboardPage() {
                       </div>
                       
                       <div className="flex justify-between text-sm">
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 rounded-full bg-green-500" />
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded-full bg-green-500" />
                           <span>Progress with Our App</span>
                         </div>
                         <span className="font-medium">
@@ -497,8 +497,8 @@ export default function DashboardPage() {
                             </Badge>
                           ))}
                         </div>
-                      </div>
-                      
+                  </div>
+
                       <div className="space-y-2">
                         <h4 className="font-medium text-primary">Growth Areas</h4>
                         <div className="flex flex-wrap gap-2">
@@ -558,9 +558,9 @@ export default function DashboardPage() {
 
                             <div className="p-4 rounded-lg border bg-accent/30">
                               <h3 className="font-medium mb-2">Market Competition</h3>
-                              <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground">
                                 {careerAnalysis?.riskAssessment?.marketCompetition || 'Market competition data not available'}
-                              </p>
+                    </p>
                             </div>
                           </div>
                         </motion.div>
@@ -645,7 +645,7 @@ export default function DashboardPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
             {/* Skills Progress */}
             <Card className="shadow-lg hover:shadow-xl transition-all duration-300">
-              <CardHeader>
+            <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <div className="p-2 bg-primary/10 rounded-full">
@@ -666,8 +666,8 @@ export default function DashboardPage() {
                     )}
                   </Button>
                 </CardTitle>
-              </CardHeader>
-              <CardContent>
+            </CardHeader>
+            <CardContent>
                 <AnimatePresence>
                   {expandedSections.skills ? (
                     <motion.div
@@ -795,7 +795,7 @@ export default function DashboardPage() {
                     </div>
                     Certifications
                   </div>
-                  <Button
+                <Button 
                     variant="ghost"
                     size="sm"
                     onClick={() => toggleSection('certifications')}
@@ -806,7 +806,7 @@ export default function DashboardPage() {
                     ) : (
                       <ChevronDown className="h-4 w-4" />
                     )}
-                  </Button>
+                </Button>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -852,7 +852,7 @@ export default function DashboardPage() {
                     </div>
                     Projects
                   </div>
-                  <Button
+                <Button 
                     variant="ghost"
                     size="sm"
                     onClick={() => toggleSection('projects')}
@@ -863,7 +863,7 @@ export default function DashboardPage() {
                     ) : (
                       <ChevronDown className="h-4 w-4" />
                     )}
-                  </Button>
+                </Button>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -889,11 +889,11 @@ export default function DashboardPage() {
                   ) : (
                     <div className="text-center text-muted-foreground p-4">
                       Click to view recommended projects
-                    </div>
+              </div>
                   )}
                 </AnimatePresence>
-              </CardContent>
-            </Card>
+            </CardContent>
+          </Card>
 
             {/* Community Strategy */}
             <Card className="shadow-lg hover:shadow-xl transition-all duration-300">
@@ -905,7 +905,7 @@ export default function DashboardPage() {
                     </div>
                     Community
                   </div>
-                  <Button
+          <Button 
                     variant="ghost"
                     size="sm"
                     onClick={() => toggleSection('community')}
@@ -916,7 +916,7 @@ export default function DashboardPage() {
                     ) : (
                       <ChevronDown className="h-4 w-4" />
                     )}
-                  </Button>
+          </Button>
                 </CardTitle>
               </CardHeader>
               <CardContent>

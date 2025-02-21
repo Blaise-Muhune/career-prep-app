@@ -51,15 +51,15 @@ export default function StepPage() {
   const [stepData, setStepData] = useState<Step | null>(null);
   const [loading, setLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
-
+    
   const fetchStepData = React.useCallback(async () => {
-    try {
-      const currentUser = auth.currentUser;
-      if (!currentUser) {
+      try {
+        const currentUser = auth.currentUser;
+        if (!currentUser) {
         console.log('No current user found, redirecting to auth');
-        router.push('/auth');
-        return;
-      }
+          router.push('/auth');
+          return;
+        }
 
       if (!params?.stepId) {
         console.error('No step ID found');
@@ -80,16 +80,16 @@ export default function StepPage() {
         console.error('Failed to fetch career analysis');
         toast.error('Failed to load step data. Redirecting to steps page...');
         setTimeout(() => router.push('/steps'), 2000);
-        return;
-      }
+            return;
+          }
 
       const analyses = await analysisResponse.json();
       if (!analyses || analyses.length === 0) {
         console.error('No career analysis found');
         toast.error('No career analysis found. Redirecting to steps page...');
         setTimeout(() => router.push('/steps'), 2000);
-        return;
-      }
+          return;
+        }
 
       // Then fetch the specific step data
       const stepResponse = await fetch(`/api/steps/${params.stepId}?userId=${currentUser.uid}`, {
@@ -119,8 +119,8 @@ export default function StepPage() {
       console.error('Error in fetchStepData:', error);
       toast.error('Failed to load step data. Redirecting to steps page...');
       setTimeout(() => router.push('/steps'), 2000);
-    } finally {
-      setLoading(false);
+      } finally {
+        setLoading(false);
     }
   }, [router]);
 
@@ -360,14 +360,14 @@ export default function StepPage() {
 
   return (
     <div className="container mx-auto p-4">
-      <Button 
+            <Button 
         variant="outline"
         onClick={() => router.push('/steps')}
         className="mb-8 flex items-center gap-2"
       >
         <ArrowLeft className="h-4 w-4" />
-        Back to Steps
-      </Button>
+              Back to Steps
+            </Button>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Content */}
@@ -379,10 +379,10 @@ export default function StepPage() {
                 <div className="space-y-1">
                   <CardTitle className="text-3xl font-bold">{stepData.title}</CardTitle>
                   <CardDescription className="text-lg">{stepData.description}</CardDescription>
-                </div>
+            </div>
                 <Badge className={getPriorityColor(stepData.priority)}>
                   {stepData.priority.toUpperCase()}
-                </Badge>
+              </Badge>
               </div>
               <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
@@ -396,9 +396,9 @@ export default function StepPage() {
                 <div className="flex items-center gap-2">
                   <Tag className="h-4 w-4" />
                   {stepData.skillType}
-                </div>
-              </div>
-            </CardHeader>
+            </div>
+          </div>
+        </CardHeader>
             <CardContent>
               <div className="space-y-6">
                 {/* Progress Section */}
@@ -484,8 +484,8 @@ export default function StepPage() {
                       ) : null}
                     </div>
                   )}
-                </div>
-
+          </div>
+          
                 {/* Timeline */}
                 <div className="space-y-4">
                   <h3 className="font-semibold">Timeline</h3>
@@ -503,14 +503,14 @@ export default function StepPage() {
                       </div>
                     )}
                   </div>
-                </div>
+            </div>
 
                 {/* Success Metrics */}
                 <div className="space-y-4">
                   <h3 className="font-semibold flex items-center gap-2">
                     <Target className="h-4 w-4" />
                     Success Metrics
-                  </h3>
+                </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {stepData.successMetrics.map((metric, index) => (
                       <div 
@@ -528,7 +528,7 @@ export default function StepPage() {
             <CardFooter>
               <div className="flex flex-col sm:flex-row gap-4 w-full">
                 {renderActionButton()}
-              </div>
+          </div>
             </CardFooter>
           </Card>
 
@@ -569,7 +569,7 @@ export default function StepPage() {
                               >
                                 <Button variant="outline" size="sm">
                                   <ExternalLink className="h-4 w-4" />
-                                </Button>
+              </Button>
                               </a>
                             )}
                           </div>
@@ -591,9 +591,9 @@ export default function StepPage() {
                             {resource.isPremium && (
                               <Badge variant="secondary" className="bg-yellow-500/10 text-yellow-500 text-xs">
                                 Premium
-                              </Badge>
-                            )}
-                          </div>
+              </Badge>
+            )}
+          </div>
                         </div>
                       </div>
                     </CardContent>
@@ -655,7 +655,7 @@ export default function StepPage() {
                 </div>
               </div>
             </CardContent>
-          </Card>
+      </Card>
         </div>
       </div>
     </div>
