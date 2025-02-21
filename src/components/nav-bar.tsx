@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { Button } from "@/components/ui/button"
 import { auth } from "@/firebaseConfig"
-import { signOut } from "firebase/auth"
+import { signOut, User } from "firebase/auth"
 import axios from 'axios'
 import { 
   RocketIcon, 
@@ -37,9 +37,8 @@ interface Notification {
 export default function NavBar() {
   const router = useRouter()
   const pathname = usePathname()
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<User | null>(null)
   const [unreadCount, setUnreadCount] = useState(0)
-  const [notifications, setNotifications] = useState<Notification[]>([])
 
   const fetchNotifications = useCallback(async (userId: string) => {
     try {
@@ -49,7 +48,6 @@ export default function NavBar() {
       })
       
       const notifs = response.data
-      setNotifications(notifs)
       setUnreadCount(notifs.filter((n: Notification) => !n.read).length)
     } catch (error) {
       console.error('Error fetching notifications:', error)
@@ -83,8 +81,6 @@ export default function NavBar() {
   useEffect(() => {
     if (pathname === '/notifications' && user) {
       setUnreadCount(0)
-      // Update local state to mark all as read
-      setNotifications(prev => prev.map(n => ({ ...n, read: true })))
     }
   }, [pathname, user])
 

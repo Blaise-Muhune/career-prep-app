@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
-import { Bell, CheckCircle, AlertCircle, Trash2, MailOpen, ArrowLeft, Loader2 } from 'lucide-react'
+import { Bell, CheckCircle, AlertCircle, ArrowLeft, Loader2 } from 'lucide-react'
 import { auth } from '../../firebaseConfig'
 import { useRouter } from 'next/navigation'
 import { Badge } from "@/components/ui/badge"
@@ -86,32 +86,6 @@ export default function NotificationsPage() {
       console.error('Error handling notification click:', err);
     }
   };
-
-  const markAsRead = async (id: number) => {
-    try {
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://career-prep-app.vercel.app'
-      await axios.post(`/api/read-notification/${id}`, {}, 
-        { withCredentials: true }
-      )
-      setNotifications(notifications.map(notif => 
-        notif.id === id ? { ...notif, read: true } : notif
-      ))
-    } catch (err) {
-      console.error('Error marking notification as read:', err)
-    }
-  }
-
-  const deleteNotification = async (id: number) => {
-    try {
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://career-prep-app.vercel.app'
-      await axios.delete(`/api/delete-notification/${id}`, 
-        { withCredentials: true }
-      )
-      setNotifications(notifications.filter(notif => notif.id !== id))
-    } catch (err) {
-      console.error('Error deleting notification:', err)
-    }
-  }
 
   const getNotificationIcon = (type: string) => {
     switch (type) {

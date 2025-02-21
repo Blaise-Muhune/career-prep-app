@@ -7,18 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
-import { 
-  User, 
-  Mail, 
-  Briefcase, 
-  Building2, 
-  DollarSign, 
-  Code, 
-  FileText,
-  Loader2,
-  RocketIcon,
-  Network
-} from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
@@ -66,25 +55,6 @@ const DOMAIN_EXPERIENCES = [
   "10+ Years"
 ];
 
-const FUTURE_GOALS = [
-  "Career Transition to AI",
-  "AI Specialization",
-  "Technical Leadership",
-  "Research and Development",
-  "Entrepreneurship",
-  "Consulting",
-  "Product Management"
-];
-
-const NETWORKING_PREFERENCES = [
-  "Online Communities",
-  "Professional Associations",
-  "Industry Events",
-  "Academic Conferences",
-  "Mentorship Programs",
-  "Open Source Projects",
-  "Social Media"
-];
 
 const LEARNING_STYLES = [
   "Self-Paced Online Courses",
@@ -103,18 +73,6 @@ const TIME_COMMITMENTS = [
   "10-15 hours/week",
   "15+ hours/week",
   "Full-time"
-];
-
-const PREFERRED_RESOURCES = [
-  "Online Courses",
-  "Video Tutorials",
-  "Technical Documentation",
-  "Academic Papers",
-  "Books",
-  "Interactive Platforms",
-  "Industry Blogs",
-  "Podcasts",
-  "Coding Challenges"
 ];
 
 const EDUCATION_LEVELS = [
@@ -246,7 +204,6 @@ export default function Home() {
     }
     
     try {
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://career-prep-app.vercel.app';
 
       // Prepare the user data
       const userData = {

@@ -165,17 +165,6 @@ function DualProgressBar({
   );
 }
 
-const getPriorityColor = (priority: string) => {
-  switch (priority.toLowerCase()) {
-    case 'critical':
-    case 'high':
-      return 'bg-red-500/10 text-red-500 border-red-500/20';
-    case 'medium':
-      return 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20';
-    default:
-      return 'bg-green-500/10 text-green-500 border-green-500/20';
-  }
-};
 
 export default function DashboardPage() {
   const [mounted, setMounted] = useState(false);
@@ -251,8 +240,6 @@ export default function DashboardPage() {
 
         } catch (err: unknown) {
           console.error('Error in data fetching:', err instanceof Error ? err.message : 'Unknown error');
-          const races = ['white', 'black', 'asian', 'hispanic', 'indian', 'middle eastern', 'native american', 'pacific islander'];
-          const sortedRaces = races.sort();
           // Set default values for failed requests
           setCareerAnalysis({
             progressPercentage: {

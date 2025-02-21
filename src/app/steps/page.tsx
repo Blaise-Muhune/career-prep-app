@@ -4,23 +4,15 @@ import { useState, useEffect } from 'react'
 import axios from 'axios'
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
 import { 
   CheckCircle, 
   Circle, 
   ArrowLeft, 
-  RefreshCcw, 
   Clock, 
-  AlertTriangle,
   ChevronRight,
   Target,
-  ArrowUpRight,
-  GraduationCap,
-  BookOpen,
   Rocket,
   Calendar,
-  AlertCircle,
-  Users
 } from 'lucide-react'
 import { auth } from "@/firebaseConfig"
 import { useRouter } from 'next/navigation'
@@ -106,9 +98,6 @@ interface CareerAnalysis {
   };
 }
 
-interface UserData {
-  dreamJob?: string;
-}
 
 export default function StepsPage() {
   const [careerAnalysis, setCareerAnalysis] = useState<CareerAnalysis | null>(null);
