@@ -1,7 +1,24 @@
-import { prisma } from '../../../../api/config/prisma.js';
-import { openai } from '../../../../api/config/openai.js';
+import { prisma } from '../../../config/prisma';
+import { openai } from '../../../config/openai';
 import { NextRequest, NextResponse } from 'next/server';
 import { Skill } from '@prisma/client';
+
+interface StructuredData {
+    jobDescription?: string;
+    currentRole?: string;
+    yearsOfExperience?: string;
+    educationLevel?: string;
+    industryPreferences?: string[];
+    preferredWorkEnvironment?: string[];
+    careerMotivations?: string[];
+}
+
+interface Profile {
+    bio?: string;
+    dreamJob?: string;
+    skills: Skill[];
+    structuredData?: StructuredData;
+}
 
 interface ProgressPercentage {
     "technical-proficiency": number;
@@ -121,13 +138,14 @@ export async function POST(request: NextRequest) {
         const bio = userData.profile?.bio || 'Not provided';
         const dreamJob = userData.profile?.dreamJob || 'Not specified';
         const skills = userData.profile?.skills?.map((s: Skill) => s.name).join(', ') || 'None listed';
-        const jobDescription = userData.profile?.jobDescription || 'Not provided';
-        const currentRole = userData.profile?.currentRole || 'Not specified';
-        const yearsOfExperience = userData.profile?.yearsOfExperience || 'Not specified';
-        const educationLevel = userData.profile?.educationLevel || 'Not specified';
-        const industryPreferences = userData.profile?.industryPreferences?.join(', ') || 'Not specified';
-        const workEnvironment = userData.profile?.preferredWorkEnvironment?.join(', ') || 'Not specified';
-        const careerMotivations = userData.profile?.careerMotivations?.join(', ') || 'Not specified';
+        const structuredData = userData.profile?.structuredData as StructuredData || {};
+        const jobDescription = structuredData.jobDescription || 'Not provided';
+        const currentRole = structuredData.currentRole || 'Not specified';
+        const yearsOfExperience = structuredData.yearsOfExperience || 'Not specified';
+        const educationLevel = structuredData.educationLevel || 'Not specified';
+        const industryPreferences = structuredData.industryPreferences?.join(', ') || 'Not specified';
+        const workEnvironment = structuredData.preferredWorkEnvironment?.join(', ') || 'Not specified';
+        const careerMotivations = structuredData.careerMotivations?.join(', ') || 'Not specified';
 
         // Create the analysis
         const prompt = `

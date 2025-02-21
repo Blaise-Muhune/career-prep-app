@@ -1,5 +1,5 @@
 import { Task } from '@prisma/client';
-import { prisma } from '../../../../../api/config/prisma.js';
+import { prisma } from '../../../../config/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 
 interface Category {
@@ -18,13 +18,17 @@ interface Resource {
     isFree: boolean;
     isPremium: boolean;
     stepId: number;
+    provider: string | null;
+    level: string | null;
+    aiRelevance: string | null;
+    timeCommitment: string | null;
 }
 
 interface StepResource extends Resource {
-    provider?: string;
-    level?: string;
-    aiRelevance?: string;
-    timeCommitment?: string;
+    provider: string | null;
+    level: string | null;
+    aiRelevance: string | null;
+    timeCommitment: string | null;
 }
 
 export async function GET(
@@ -98,7 +102,7 @@ export async function GET(
                 level: resource.level || 'beginner',
                 aiRelevance: resource.aiRelevance || 'foundational',
                 timeCommitment: resource.timeCommitment || '1-2 hours'
-            }))
+            })) as StepResource[]
         };
 
         return NextResponse.json(stepWithProgress);

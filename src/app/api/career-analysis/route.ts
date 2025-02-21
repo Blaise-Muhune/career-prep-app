@@ -1,4 +1,4 @@
-import { prisma } from '../../../../api/config/prisma.js';
+import { prisma } from '../../../config/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json(analyses);
     } catch (error: unknown) {
         console.error('Error fetching career analyses:', error);
-        return NextResponse.json({ 
+        return NextResponse.json({
             error: 'Failed to fetch career analyses',
             details: error instanceof Error ? error.message : 'Unknown error'
         }, { status: 500 });

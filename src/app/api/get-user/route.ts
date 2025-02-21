@@ -1,4 +1,4 @@
-import { prisma } from '../../../../api/config/prisma.js';
+import { prisma } from '../../../config/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 import { Skill, Task } from '@prisma/client';
 
