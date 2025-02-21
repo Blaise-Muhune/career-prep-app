@@ -295,6 +295,7 @@ export async function POST(request: NextRequest) {
         }
 
         const response = JSON.parse(completion.choices[0].message.content);
+        console.log('Gpt Response:', response);
 
         // Calculate the total progress from the OpenAI response
         const progressPercentage = response.progressPercentage as ProgressPercentage;
