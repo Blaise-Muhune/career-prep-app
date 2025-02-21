@@ -250,8 +250,17 @@ export async function POST(request: NextRequest) {
                     content: prompt 
                 }
             ],
-            model: "gpt-4o-mini",
+            model: "gpt-4",
             response_format: { type: "json_object" }
+        }, {
+            timeout: 60000, // 60 second timeout
+            maxRetries: 3
+        }).catch(error => {
+            console.error('OpenAI API Error:', error);
+            if (error.code === 'ETIMEDOUT' || error.code === 'ECONNABORTED') {
+                throw new Error('Request timed out. Please try again.');
+            }
+            throw error;
         });
 
         if (!completion.choices[0].message.content) {
