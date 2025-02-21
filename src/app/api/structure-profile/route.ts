@@ -250,7 +250,7 @@ export async function POST(request: NextRequest) {
                     content: prompt 
                 }
             ],
-            model: "gpt-4o-preview",
+            model: "gpt-4-turbo-preview",
             response_format: { type: "json_object" }
         }, {
             timeout: 60000, // 60 second timeout
