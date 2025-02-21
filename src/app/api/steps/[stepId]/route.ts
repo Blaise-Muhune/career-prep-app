@@ -27,14 +27,20 @@ interface StepResource extends Resource {
     timeCommitment?: string;
 }
 
+type Context = {
+    params: {
+        stepId: string;
+    };
+};
+
 export async function GET(
     request: NextRequest,
-    { params }: { params: { stepId: string } }
+    context: Context
 ) {
     try {
         const searchParams = request.nextUrl.searchParams;
         const userId = searchParams.get('userId');
-        const stepIdNum = parseInt(params.stepId);
+        const stepIdNum = parseInt(context.params.stepId);
         
         if (!userId) {
             return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
@@ -108,16 +114,16 @@ export async function GET(
             details: error instanceof Error ? error.message : 'Unknown error'
         }, { status: 500 });
     }
-};
+}
 
 export async function PATCH(
     request: NextRequest,
-    { params }: { params: { stepId: string } }
+    context: Context
 ) {
     try {
         const body = await request.json();
         const { userId, status, timelineProgress } = body;
-        const stepIdNum = parseInt(params.stepId);
+        const stepIdNum = parseInt(context.params.stepId);
 
         if (!userId) {
             return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
@@ -191,4 +197,4 @@ export async function PATCH(
             details: error instanceof Error ? error.message : 'Unknown error'
         }, { status: 500 });
     }
-}; 
+} 
