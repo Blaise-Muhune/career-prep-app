@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation'
 import { Badge } from "@/components/ui/badge"
 import { formatDistanceToNow } from 'date-fns'
 import { cn } from "@/lib/utils"
+import { toast } from "sonner"
 
 type Notification = {
   id: number
@@ -42,6 +43,9 @@ export default function NotificationsPage() {
 
         if (Array.isArray(response.data)) {
           setNotifications(response.data);
+          
+          // Mark notifications as read when page is visited
+          await markNotificationsAsRead(currentUser.uid);
         } else {
           console.warn('Notifications data is not an array:', response.data);
           setNotifications([]);
@@ -49,6 +53,7 @@ export default function NotificationsPage() {
       } catch (err) {
         console.error('Error fetching notifications:', err);
         setError('Failed to load notifications.');
+        toast.error('Failed to load notifications');
       } finally {
         setLoading(false);
       }
@@ -57,27 +62,24 @@ export default function NotificationsPage() {
     fetchNotifications();
   }, [router]);
 
+  const markNotificationsAsRead = async (userId: string) => {
+    try {
+      await axios.post('/api/mark-notifications-read', { userId });
+      // Update local state to mark all notifications as read
+      setNotifications(prevNotifications =>
+        prevNotifications.map(notification => ({
+          ...notification,
+          read: true
+        }))
+      );
+    } catch (error) {
+      console.error('Error marking notifications as read:', error);
+    }
+  };
+
   const handleNotificationClick = async (notification: Notification) => {
     try {
       if (notification.stepId) {
-        console.log('Clicking notification for step:', notification.stepId);
-        
-        // Mark as read before navigating
-        if (!notification.read) {
-          const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://career-prep-app.vercel.app';
-          await axios.post(
-            `/api/read-notification/${notification.id}`,
-            {},
-            { withCredentials: true }
-          );
-          
-          // Update local state
-          setNotifications(notifications.map(notif => 
-            notif.id === notification.id ? { ...notif, read: true } : notif
-          ));
-        }
-        
-        // Navigate to the step
         router.push(`/steps/${notification.stepId}`);
       }
     } catch (err) {
@@ -175,9 +177,10 @@ export default function NotificationsPage() {
                 <Card 
                   key={notification.id}
                   className={cn(
-                    "transition-all duration-200 hover:shadow-md",
+                    "transition-all duration-200 hover:shadow-md cursor-pointer",
                     !notification.read && "bg-accent/20"
                   )}
+                  onClick={() => handleNotificationClick(notification)}
                 >
                   <CardContent className="p-4">
                     <div className="flex items-start gap-4">

@@ -21,11 +21,11 @@ export async function GET(request: NextRequest) {
         });
 
         return NextResponse.json(analyses);
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Error fetching career analyses:', error);
         return NextResponse.json({ 
             error: 'Failed to fetch career analyses',
-            details: error.message || 'Unknown error'
+            details: error instanceof Error ? error.message : 'Unknown error'
         }, { status: 500 });
     }
 }
@@ -67,11 +67,11 @@ export async function POST(request: NextRequest) {
             error: 'No recent career analysis found',
             message: 'Please use the structure-profile endpoint to generate a new analysis'
         }, { status: 404 });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Error in career analysis:', error);
         return NextResponse.json({ 
             error: 'Failed to fetch career analysis',
-            details: error.message || 'Unknown error'
+            details: error instanceof Error ? error.message : 'Unknown error'
         }, { status: 500 });
     }
 } 

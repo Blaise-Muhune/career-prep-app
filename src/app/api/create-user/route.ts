@@ -8,11 +8,11 @@ const INITIAL_RETRY_DELAY = 1000; // 1 second
 async function retryOperation<T>(operation: () => Promise<T>, retries = MAX_RETRIES, delay = INITIAL_RETRY_DELAY): Promise<T> {
     try {
         return await operation();
-    } catch (error: any) {
+    } catch (error: unknown) {
         if (retries > 0 && (
             error instanceof Prisma.PrismaClientInitializationError ||
             error instanceof Prisma.PrismaClientKnownRequestError ||
-            error.message?.includes('Connection terminated')
+            (error instanceof Error && error.message?.includes('Connection terminated'))
         )) {
             console.log(`Retrying operation, ${retries} attempts remaining`);
             await new Promise(resolve => setTimeout(resolve, delay));
@@ -127,15 +127,15 @@ export async function POST(request: NextRequest) {
 
         console.log('User created/updated successfully:', userData.id);
         return NextResponse.json(userData, { status: 201 });
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Error creating/updating user:', {
-            message: error.message,
-            code: error.code,
-            meta: error.meta,
-            stack: error.stack
+            message: error instanceof Error ? error.message : 'Unknown error',
+            code: error instanceof Prisma.PrismaClientKnownRequestError ? error.code : 'Unknown error',
+            meta: error instanceof Prisma.PrismaClientKnownRequestError ? error.meta : 'Unknown error',
+            stack: error instanceof Error ? error.stack : 'Unknown error'
         });
         
-        if (error.code === 'P2002') {
+        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
             return NextResponse.json({
                 error: 'Email already exists',
                 details: 'A user with this email already exists in the system'
@@ -144,7 +144,7 @@ export async function POST(request: NextRequest) {
         
         return NextResponse.json({
             error: 'Failed to create/update user',
-            details: error.message || 'Unknown error'
+                details: error instanceof Error ? error.message : 'Unknown error'
         }, { status: 500 });
     }
 } 

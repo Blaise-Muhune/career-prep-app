@@ -1,20 +1,47 @@
+import { Task } from '@prisma/client';
 import { prisma } from '../../../../../api/config/prisma.js';
 import { NextRequest, NextResponse } from 'next/server';
 
+interface Category {
+    category: string;
+    tasks: Task[];
+}
+
+interface Resource {
+    id: number;
+    name: string;
+    url: string | null;
+    description: string;
+    type: string;
+    category: string;
+    tags: string;
+    isFree: boolean;
+    isPremium: boolean;
+    stepId: number;
+}
+
+interface StepResource extends Resource {
+    provider?: string;
+    level?: string;
+    aiRelevance?: string;
+    timeCommitment?: string;
+}
+
 type RouteContext = {
-    params: Promise<{
+    params: {
         stepId: string;
-    }>;
+    };
 };
 
-export const GET = async (
+export async function GET(
     request: NextRequest,
     context: RouteContext
-) => {
+) {
     try {
         const searchParams = request.nextUrl.searchParams;
         const userId = searchParams.get('userId');
-        const { stepId } = await context.params;
+        const params = await context.params;
+        const { stepId } = params;
         const stepIdNum = parseInt(stepId);
         
         if (!userId) {
@@ -25,22 +52,25 @@ export const GET = async (
             return NextResponse.json({ error: 'Invalid step ID' }, { status: 400 });
         }
 
-        // Get the step and check if it belongs to the user's career analysis
-        const step = await prisma.step.findFirst({
-            where: {
-                id: stepIdNum,
-                careerAnalysis: {
-                    userId
-                }
-            },
+        // Get the most recent career analysis first
+        const recentAnalysis = await prisma.careerAnalysis.findFirst({
+            where: { userId },
+            orderBy: { createdAt: 'desc' },
             include: {
-                resources: true
+                steps: {
+                    where: { id: stepIdNum },
+                    include: {
+                        resources: true
+                    }
+                }
             }
         });
 
-        if (!step) {
+        if (!recentAnalysis || !recentAnalysis.steps.length) {
             return NextResponse.json({ error: 'Step not found' }, { status: 404 });
         }
+
+        const step = recentAnalysis.steps[0];
 
         // Get the user's progress for this step
         const stepProgress = await prisma.stepProgress.findUnique({
@@ -52,20 +82,38 @@ export const GET = async (
             }
         });
 
-        // Combine step data with progress
+        // Parse the analysis to get additional step data
+        const analysisData = JSON.parse(recentAnalysis.analysis);
+        const stepCategory = analysisData.aiRoadmap.find((category: Category) => 
+            category.tasks.some((task: Task) => task.title === step.title)
+        );
+        const stepDetails = stepCategory?.tasks.find((task: Task) => task.title === step.title);
+
+        // Combine step data with progress and additional details
         const stepWithProgress = {
             ...step,
-            status: stepProgress?.status || 'NOT_STARTED',
-            startedAt: stepProgress?.startedAt || null,
-            completedAt: stepProgress?.completedAt || null
+            status: stepProgress?.status || step.status,
+            startedAt: stepProgress?.startedAt || step.startedAt,
+            completedAt: stepProgress?.completedAt || step.completedAt,
+            category: stepCategory?.category || step.category,
+            skillType: stepDetails?.skillType || step.skillType,
+            successMetrics: stepDetails?.successMetrics || step.successMetrics || [],
+            urgency: stepDetails?.urgency || step.timeframe,
+            resources: step.resources.map((resource: StepResource) => ({
+                ...resource,
+                provider: resource.provider || 'General',
+                level: resource.level || 'Beginner',
+                aiRelevance: resource.aiRelevance || 'foundational',
+                timeCommitment: resource.timeCommitment || '1-2 hours'
+            }))
         };
 
         return NextResponse.json(stepWithProgress);
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Error fetching step:', error);
         return NextResponse.json({ 
             error: 'Failed to fetch step',
-            details: error.message || 'Unknown error'
+            details: error instanceof Error ? error.message : 'Unknown error'
         }, { status: 500 });
     }
 };
@@ -77,7 +125,8 @@ export const PATCH = async (
     try {
         const body = await request.json();
         const { userId, status, timelineProgress } = body;
-        const { stepId } = await context.params;
+        const params = await context.params;
+        const { stepId } = params;
         const stepIdNum = parseInt(stepId);
 
         if (!userId) {
@@ -110,7 +159,9 @@ export const PATCH = async (
                 where: { id: stepIdNum },
                 data: {
                     status: status,
-                    timelineProgress: timelineProgress || 0
+                    timelineProgress: timelineProgress || 0,
+                    startedAt: status === 'IN_PROGRESS' ? now : undefined,
+                    completedAt: status === 'COMPLETED' ? now : undefined
                 }
             }),
             // Update or create the step progress
@@ -143,11 +194,11 @@ export const PATCH = async (
         };
 
         return NextResponse.json(updatedStep);
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Error updating step:', error);
         return NextResponse.json({ 
             error: 'Failed to update step',
-            details: error.message || 'Unknown error'
+            details: error instanceof Error ? error.message : 'Unknown error'
         }, { status: 500 });
     }
 }; 

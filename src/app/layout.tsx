@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider"
 import AuthGuard from "@/components/auth-guard";
 import { Toaster } from "sonner"
 import ClientThemeWrapper from "@/components/client-theme-wrapper";
+import LayoutWrapper from "@/components/layout-wrapper";
 
 const geistSans = localFont({
   src: './fonts/GeistVF.woff',
@@ -33,9 +34,13 @@ export default function RootLayout({
         <ThemeProvider>
           <ClientThemeWrapper>
             <div
-              className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+              className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen`}
             >
-              <AuthGuard>{children}</AuthGuard>
+              <AuthGuard>
+                <LayoutWrapper>
+                  {children}
+                </LayoutWrapper>
+              </AuthGuard>
             </div>
           </ClientThemeWrapper>
           <Toaster position="bottom-right" />

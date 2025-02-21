@@ -24,11 +24,11 @@ export async function GET(request: NextRequest) {
         });
 
         return NextResponse.json(notifications);
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Error fetching notifications:', error);
         return NextResponse.json({ 
             error: 'Failed to fetch notifications',
-            details: error.message || 'Unknown error'
+            details: error instanceof Error ? error.message : 'Unknown error'
         }, { status: 500 });
     }
 } 

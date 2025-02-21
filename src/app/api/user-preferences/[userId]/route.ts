@@ -28,11 +28,11 @@ export async function PUT(
         });
 
         return NextResponse.json(updatedUser);
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Error updating preferences:', error);
         return NextResponse.json({ 
             error: 'Failed to update preferences',
-            details: error.message || 'Unknown error'
+            details: error instanceof Error ? error.message : 'Unknown error'
         }, { status: 500 });
     }
 } 

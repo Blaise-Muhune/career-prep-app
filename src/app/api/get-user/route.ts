@@ -1,6 +1,6 @@
 import { prisma } from '../../../../api/config/prisma.js';
 import { NextRequest, NextResponse } from 'next/server';
-import { Skill, Task, StepProgress } from '@prisma/client';
+import { Skill, Task } from '@prisma/client';
 
 export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
@@ -60,8 +60,11 @@ export async function GET(request: NextRequest) {
       };
   
       return NextResponse.json(userData);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error fetching user:', error);
-      return NextResponse.json({ error: 'Failed to fetch user' }, { status: 500 });
+      return NextResponse.json({ 
+        error: 'Failed to fetch user',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      }, { status: 500 });
     }
 } 

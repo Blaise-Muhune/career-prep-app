@@ -3,14 +3,14 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { auth } from "@/firebaseConfig";
-import { Clock, Calendar, ArrowLeft, PlayCircle, CheckCircle, AlertTriangle, Timer, ExternalLink, BookOpen, Video, Headphones, Book, GraduationCap, Tag } from 'lucide-react';
+import { Clock, ArrowLeft, PlayCircle, CheckCircle, AlertTriangle, Timer, ExternalLink, BookOpen, Video, Headphones, Book, GraduationCap, Tag, Folder, Code, Target, Users, Award, Zap } from 'lucide-react';
 import { startStep, completeStep, resetStep } from '@/app/lib/steps';
 import { toast } from 'sonner';
 import * as React from 'react';
+import { parseISO } from 'date-fns';
 
 interface Resource {
   id: number;
@@ -18,6 +18,10 @@ interface Resource {
   url: string | null;
   description: string;
   type: string;
+  provider: string;
+  level: string;
+  aiRelevance: string;
+  timeCommitment: string;
   category: string;
   tags: string;
   isFree: boolean;
@@ -26,30 +30,27 @@ interface Resource {
 
 interface Step {
   id: number;
-  analysisId: number;
   title: string;
   description: string;
-  timeframe: string;
+  urgency: string;
   priority: string;
+  skillType: string;
+  category: string;
   status: 'NOT_STARTED' | 'IN_PROGRESS' | 'COMPLETED';
   timelineProgress: number;
   startedAt: string | null;
   completedAt: string | null;
+  successMetrics: string[];
   resources: Resource[];
+  timeframe: string;
 }
 
-interface PageProps {
-  params: Promise<{
-    stepId: string;
-  }>;
-}
-
-export default function StepPage({ params }: PageProps) {
+export default function StepPage() {
   const router = useRouter();
+  const params = useParams();
   const [stepData, setStepData] = useState<Step | null>(null);
   const [loading, setLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
-  const { stepId } = React.use(params);
 
   const fetchStepData = async () => {
     try {
@@ -60,8 +61,38 @@ export default function StepPage({ params }: PageProps) {
         return;
       }
 
-      // Use the dedicated steps API endpoint instead of career analysis
-      const stepResponse = await fetch(`/api/steps/${stepId}?userId=${currentUser.uid}`, {
+      if (!params?.stepId) {
+        console.error('No step ID found');
+        toast.error('Invalid step ID. Redirecting to steps page...');
+        setTimeout(() => router.push('/steps'), 2000);
+        return;
+      }
+
+      // First, get the latest career analysis to ensure the step exists
+      const analysisResponse = await fetch(`/api/career-analysis?userId=${currentUser.uid}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!analysisResponse.ok) {
+        console.error('Failed to fetch career analysis');
+        toast.error('Failed to load step data. Redirecting to steps page...');
+        setTimeout(() => router.push('/steps'), 2000);
+        return;
+      }
+
+      const analyses = await analysisResponse.json();
+      if (!analyses || analyses.length === 0) {
+        console.error('No career analysis found');
+        toast.error('No career analysis found. Redirecting to steps page...');
+        setTimeout(() => router.push('/steps'), 2000);
+        return;
+      }
+
+      // Then fetch the specific step data
+      const stepResponse = await fetch(`/api/steps/${params.stepId}?userId=${currentUser.uid}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -69,15 +100,15 @@ export default function StepPage({ params }: PageProps) {
       });
 
       if (!stepResponse.ok) {
-        console.error('Failed to fetch step data');
+        console.error('Failed to fetch step data:', await stepResponse.text());
         toast.error('Failed to load step data. Redirecting to steps page...');
         setTimeout(() => router.push('/steps'), 2000);
         return;
       }
 
       const stepData = await stepResponse.json();
-      if (!stepData) {
-        console.error('Step not found');
+      if (!stepData || !stepData.id) {
+        console.error('Invalid step data received');
         toast.error('Step not found. Redirecting to steps page...');
         setTimeout(() => router.push('/steps'), 2000);
         return;
@@ -109,16 +140,16 @@ export default function StepPage({ params }: PageProps) {
       console.log('Cleaning up auth state listener');
       unsubscribe();
     };
-  }, [stepId]);
+  }, [params?.stepId]);
 
   const handleToggleStep = async () => {
     const currentUser = auth.currentUser;
-    if (!currentUser || !stepId || !stepData) return;
+    if (!currentUser || !params?.stepId || !stepData) return;
     
     setIsLoading(true);
     try {
       if (stepData.status === 'NOT_STARTED') {
-        await startStep(parseInt(stepId), currentUser.uid);
+        await startStep(parseInt(params.stepId as string), currentUser.uid);
         setStepData(prev => prev ? {
           ...prev,
           status: 'IN_PROGRESS',
@@ -126,7 +157,7 @@ export default function StepPage({ params }: PageProps) {
         } : null);
         toast.success('Step started successfully!');
       } else if (stepData.status === 'IN_PROGRESS') {
-        await resetStep(parseInt(stepId), currentUser.uid);
+        await resetStep(parseInt(params.stepId as string), currentUser.uid);
         setStepData(prev => prev ? {
           ...prev,
           status: 'NOT_STARTED',
@@ -144,11 +175,11 @@ export default function StepPage({ params }: PageProps) {
 
   const handleCompleteStep = async () => {
     const currentUser = auth.currentUser;
-    if (!currentUser || !stepId || !stepData) return;
+    if (!currentUser || !params?.stepId || !stepData) return;
     
     setIsLoading(true);
     try {
-      await completeStep(parseInt(stepId), currentUser.uid);
+      await completeStep(parseInt(params.stepId as string), currentUser.uid);
       setStepData(prev => prev ? {
         ...prev,
         status: 'COMPLETED',
@@ -197,9 +228,38 @@ export default function StepPage({ params }: PageProps) {
         return <Book className="h-5 w-5" />;
       case 'course':
         return <GraduationCap className="h-5 w-5" />;
+      case 'certification':
+        return <Award className="h-5 w-5" />;
+      case 'project':
+        return <Code className="h-5 w-5" />;
+      case 'community':
+        return <Users className="h-5 w-5" />;
       default:
         return <BookOpen className="h-5 w-5" />;
     }
+  };
+
+  const parseDuration = (timeframe: string): number => {
+    // Handle the urgency format from the API
+    if (timeframe.includes('immediate')) {
+      return 6 * 30 * 24 * 60 * 60 * 1000; // 6 months
+    } else if (timeframe.includes('near-term')) {
+      return 12 * 30 * 24 * 60 * 60 * 1000; // 12 months
+    } else if (timeframe.includes('future')) {
+      return 24 * 30 * 24 * 60 * 60 * 1000; // 24 months
+    }
+
+    // Try to extract numbers from the string
+    const numbers = timeframe.match(/\d+/g);
+    if (numbers && numbers.length > 0) {
+      const months = parseInt(numbers[numbers.length - 1]);
+      if (!isNaN(months)) {
+        return months * 30 * 24 * 60 * 60 * 1000; // Convert months to milliseconds
+      }
+    }
+
+    // Default fallback
+    return 6 * 30 * 24 * 60 * 60 * 1000; // Default to 6 months
   };
 
   const renderActionButton = () => {
@@ -256,166 +316,348 @@ export default function StepPage({ params }: PageProps) {
 
   if (loading) {
     return (
-      <div className="container mx-auto p-4 flex items-center justify-center min-h-[60vh]">
-        <div className="animate-pulse text-xl font-semibold">Loading...</div>
+      <div className="container mx-auto p-4">
+        <Button 
+          variant="outline"
+          onClick={() => router.push('/steps')}
+          className="mb-8 flex items-center gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Steps
+        </Button>
+
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="animate-pulse flex flex-col items-center gap-4">
+            <div className="h-8 w-8 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+            <p className="text-lg font-medium">Loading step details...</p>
+          </div>
+        </div>
       </div>
     );
   }
 
   if (!stepData) {
     return (
-      <div className="container mx-auto p-4 flex items-center justify-center min-h-[60vh]">
-        <div className="text-xl font-semibold text-red-500">Step not found</div>
+      <div className="container mx-auto p-4">
+        <Button 
+          variant="outline"
+          onClick={() => router.push('/steps')}
+          className="mb-8 flex items-center gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to Steps
+        </Button>
+
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center space-y-4">
+            <AlertTriangle className="h-12 w-12 text-destructive mx-auto" />
+            <p className="text-lg font-medium">Step not found</p>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="container mx-auto p-4">
-      <Card className="max-w-3xl mx-auto shadow-lg">
-        <CardHeader className="border-b">
-          <div className="flex items-center gap-2 text-muted-foreground mb-4">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => router.back()}
-              className="hover:bg-background"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Steps
-            </Button>
-          </div>
-          
-          <div className="flex justify-between items-start gap-4">
-            <div className="space-y-2">
-              <CardTitle className="text-2xl">{stepData.title}</CardTitle>
-              <CardDescription className="text-base">{stepData.description}</CardDescription>
-            </div>
-            <div className="flex flex-col items-end gap-2">
-              <Badge className={`px-4 py-2 ${getPriorityColor(stepData.priority)}`}>
-                {stepData.priority.toUpperCase()} PRIORITY
-              </Badge>
-              <Badge 
-                variant="outline" 
-                className="flex items-center gap-2"
-              >
-                {getStatusIcon(stepData.status)}
-                {stepData.status.replace('_', ' ')}
-              </Badge>
-            </div>
-          </div>
-        </CardHeader>
+      <Button 
+        variant="outline"
+        onClick={() => router.push('/steps')}
+        className="mb-8 flex items-center gap-2"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to Steps
+      </Button>
 
-        <CardContent className="pt-6 space-y-6">
-          <div className="bg-accent/50 p-6 rounded-lg">
-            <h3 className="font-semibold mb-4 flex items-center gap-2">
-              <Clock className="h-5 w-5 text-primary" />
-              Timeline Progress
-            </h3>
-            <Progress 
-              value={stepData.timelineProgress} 
-              className="h-3 mb-2"
-            />
-            <p className="text-center text-sm text-muted-foreground mt-2">
-              {stepData.status === 'NOT_STARTED' ? 'Not Started' :
-               stepData.status === 'COMPLETED' ? 'Completed' :
-               `${stepData.timelineProgress}% of time elapsed`}
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="p-4 rounded-lg border">
-              <h3 className="font-semibold mb-2 flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-primary" />
-                Estimated Timeframe
-              </h3>
-              <p className="text-muted-foreground">{stepData.timeframe}</p>
-            </div>
-
-            {stepData.startedAt && (
-              <div className="p-4 rounded-lg border">
-                <h3 className="font-semibold mb-2 flex items-center gap-2">
-                  <PlayCircle className="h-5 w-5 text-primary" />
-                  Started On
-                </h3>
-                <p className="text-muted-foreground">
-                  {new Date(stepData.startedAt).toLocaleDateString(undefined, {
-                    weekday: 'long',
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
-                  })}
-                </p>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Main Content */}
+        <div className="lg:col-span-2 space-y-8">
+          {/* Header Card */}
+          <Card className="bg-gradient-to-br from-background to-accent/20 border-none shadow-lg">
+            <CardHeader className="space-y-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-1">
+                  <CardTitle className="text-3xl font-bold">{stepData.title}</CardTitle>
+                  <CardDescription className="text-lg">{stepData.description}</CardDescription>
+                </div>
+                <Badge className={getPriorityColor(stepData.priority)}>
+                  {stepData.priority.toUpperCase()}
+                </Badge>
               </div>
-            )}
-          </div>
+              <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  {stepData.timeframe}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Folder className="h-4 w-4" />
+                  {stepData.category}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Tag className="h-4 w-4" />
+                  {stepData.skillType}
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {/* Progress Section */}
+                <div className="space-y-6">
+                  {stepData.status !== 'NOT_STARTED' && (
+                    <div className="flex flex-col items-center justify-center p-4">
+                      {stepData.status === 'COMPLETED' ? (
+                        <div className="relative w-32 h-32">
+                          <svg className="w-full h-full" viewBox="0 0 100 100">
+                            <circle
+                              className="text-muted stroke-current"
+                              strokeWidth="8"
+                              fill="transparent"
+                              r="42"
+                              cx="50"
+                              cy="50"
+                            />
+                            <circle
+                              className="text-green-500 stroke-current"
+                              strokeWidth="8"
+                              strokeLinecap="round"
+                              fill="transparent"
+                              r="42"
+                              cx="50"
+                              cy="50"
+                              style={{
+                                strokeDasharray: `${2 * Math.PI * 42}`,
+                                strokeDashoffset: "0",
+                                transition: "stroke-dashoffset 1s ease-in-out",
+                              }}
+                            />
+                          </svg>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <CheckCircle className="h-12 w-12 text-green-500" />
+                          </div>
+                        </div>
+                      ) : stepData.startedAt ? (
+                        (() => {
+                          const startDate = parseISO(stepData.startedAt!);
+                          const duration = parseDuration(stepData.timeframe);
+                          const now = new Date();
+                          const elapsed = now.getTime() - startDate.getTime();
+                          const progress = Math.min((elapsed / duration) * 100, 100);
+                          
+                          const circumference = 2 * Math.PI * 42;
+                          const offset = circumference - (progress / 100) * circumference;
+                          
+                          return (
+                            <div className="relative w-32 h-32">
+                              <svg className="w-full h-full -rotate-90" viewBox="0 0 100 100">
+                                <circle
+                                  className="text-muted stroke-current"
+                                  strokeWidth="8"
+                                  fill="transparent"
+                                  r="42"
+                                  cx="50"
+                                  cy="50"
+                                />
+                                <circle
+                                  className="text-blue-500 stroke-current"
+                                  strokeWidth="8"
+                                  strokeLinecap="round"
+                                  fill="transparent"
+                                  r="42"
+                                  cx="50"
+                                  cy="50"
+                                  style={{
+                                    strokeDasharray: `${circumference}`,
+                                    strokeDashoffset: `${offset}`,
+                                    transition: "stroke-dashoffset 1s ease-in-out",
+                                  }}
+                                />
+                              </svg>
+                              <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                <span className="text-2xl font-bold">{Math.round(progress)}%</span>
+                                <span className="text-sm text-muted-foreground whitespace-nowrap">
+                                  {stepData.timeframe}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })()
+                      ) : null}
+                    </div>
+                  )}
+                </div>
+
+                {/* Timeline */}
+                <div className="space-y-4">
+                  <h3 className="font-semibold">Timeline</h3>
+                  <div className="space-y-2">
+                    {stepData.startedAt && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <div className="w-2 h-2 rounded-full bg-blue-500" />
+                        Started {new Date(stepData.startedAt).toLocaleDateString()}
+                      </div>
+                    )}
+                    {stepData.completedAt && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <div className="w-2 h-2 rounded-full bg-green-500" />
+                        Completed {new Date(stepData.completedAt).toLocaleDateString()}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Success Metrics */}
+                <div className="space-y-4">
+                  <h3 className="font-semibold flex items-center gap-2">
+                    <Target className="h-4 w-4" />
+                    Success Metrics
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {stepData.successMetrics.map((metric, index) => (
+                      <div 
+                        key={index}
+                        className="p-3 rounded-lg border bg-accent/10 flex items-start gap-3"
+                      >
+                        <Zap className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                        <span className="text-sm">{metric}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <div className="flex flex-col sm:flex-row gap-4 w-full">
+                {renderActionButton()}
+              </div>
+            </CardFooter>
+          </Card>
 
           {/* Resources Section */}
-          {stepData.resources && stepData.resources.length > 0 && (
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg">Learning Resources</h3>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-2xl flex items-center gap-2">
+                <BookOpen className="h-6 w-6 text-primary" />
+                Learning Resources
+              </CardTitle>
+              <CardDescription>
+                Curated materials to help you complete this step successfully
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
               <div className="grid gap-4">
-                {stepData.resources.map((resource) => (
-                  <Card key={resource.id} className="hover:shadow-md transition-shadow">
+                {stepData.resources.map((resource, index) => (
+                  <Card key={index} className="overflow-hidden hover:shadow-md transition-shadow">
                     <CardContent className="p-4">
                       <div className="flex items-start gap-4">
-                        <div className="p-2 bg-primary/10 rounded-lg">
+                        <div className="p-2 rounded-lg bg-primary/10">
                           {getResourceIcon(resource.type)}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <h4 className="font-medium">{resource.name}</h4>
-                            <div className="flex gap-2">
-                              {resource.isFree && (
-                                <Badge variant="secondary">Free</Badge>
-                              )}
-                              {resource.isPremium && (
-                                <Badge variant="default">Premium</Badge>
-                              )}
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="space-y-1">
+                              <h4 className="font-semibold line-clamp-1">{resource.name}</h4>
+                              <p className="text-sm text-muted-foreground line-clamp-2">
+                                {resource.description}
+                              </p>
                             </div>
-                          </div>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {resource.description}
-                          </p>
-                          <div className="flex items-center gap-2 mt-2">
-                            <Tag className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm text-muted-foreground">
-                              {resource.category}
-                            </span>
-                          </div>
-                          {resource.url && (
-                            <Button
-                              variant="link"
-                              className="p-0 h-auto mt-2 text-primary"
-                              asChild
-                            >
+                            {resource.url && (
                               <a
                                 href={resource.url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex items-center gap-2"
+                                className="flex-shrink-0"
                               >
-                                <ExternalLink className="h-4 w-4" />
-                                Access Resource
+                                <Button variant="outline" size="sm">
+                                  <ExternalLink className="h-4 w-4" />
+                                </Button>
                               </a>
-                            </Button>
-                          )}
+                            )}
+                          </div>
+                          <div className="flex flex-wrap gap-2 mt-3">
+                            <Badge variant="secondary" className="text-xs">
+                              {resource.provider}
+                            </Badge>
+                            <Badge variant="secondary" className="text-xs">
+                              {resource.level}
+                            </Badge>
+                            <Badge variant="secondary" className="text-xs">
+                              {resource.timeCommitment}
+                            </Badge>
+                            {resource.isFree && (
+                              <Badge variant="secondary" className="bg-green-500/10 text-green-500 text-xs">
+                                Free
+                              </Badge>
+                            )}
+                            {resource.isPremium && (
+                              <Badge variant="secondary" className="bg-yellow-500/10 text-yellow-500 text-xs">
+                                Premium
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </CardContent>
                   </Card>
                 ))}
               </div>
-            </div>
-          )}
-        </CardContent>
+            </CardContent>
+          </Card>
+        </div>
 
-        <CardFooter className="border-t pt-6">
-          <div className="w-full flex justify-end">
-            {renderActionButton()}
-          </div>
-        </CardFooter>
-      </Card>
+        {/* Sidebar */}
+        <div className="space-y-6">
+          {/* Status Card */}
+          <Card className="bg-gradient-to-br from-background to-accent/20 border-none shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-xl">Step Status</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className={`p-4 rounded-lg ${
+                  stepData.status === 'COMPLETED' ? 'bg-green-500/10' :
+                  stepData.status === 'IN_PROGRESS' ? 'bg-blue-500/10' :
+                  'bg-yellow-500/10'
+                }`}>
+                  <div className="flex items-center gap-3">
+                    {getStatusIcon(stepData.status)}
+                    <div>
+                      <p className="font-medium">{stepData.status.replace('_', ' ')}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {stepData.status === 'COMPLETED' ? 'Great job!' :
+                         stepData.status === 'IN_PROGRESS' ? 'Keep going!' :
+                         'Ready to start?'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Quick Tips */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-xl flex items-center gap-2">
+                <Zap className="h-5 w-5 text-primary" />
+                Quick Tips
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="p-3 rounded-lg bg-accent/10">
+                  <p className="text-sm">Break down the step into smaller tasks</p>
+                </div>
+                <div className="p-3 rounded-lg bg-accent/10">
+                  <p className="text-sm">Track your progress regularly</p>
+                </div>
+                <div className="p-3 rounded-lg bg-accent/10">
+                  <p className="text-sm">Use the provided resources effectively</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 }

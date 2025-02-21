@@ -34,11 +34,11 @@ export async function GET(request: NextRequest) {
         }
 
         return NextResponse.json(subscription);
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Error fetching subscription:', error);
         return NextResponse.json({ 
             error: 'Failed to fetch subscription',
-            details: error.message || 'Unknown error'
+            details: error instanceof Error ? error.message : 'Unknown error'
         }, { status: 500 });
     }
 } 

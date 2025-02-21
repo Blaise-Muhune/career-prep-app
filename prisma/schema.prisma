@@ -94,6 +94,14 @@ model CareerAnalysis {
   analysis  String   @db.Text
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  progressPercentage Json
+  totalProgress Float
+  aiRoadmap Json[]
+  trendAnalysis Json
+  certificationPath Json[]
+  projectRecommendations Json[]
+  communityStrategy Json
+  riskAssessment Json
 }
 
 model Step {
@@ -106,9 +114,12 @@ model Step {
   timelineProgress Float         @default(0)
   startedAt       DateTime?
   completedAt     DateTime?
+  skillType       String?
+  successMetrics  String[]
   careerAnalysis  CareerAnalysis @relation(fields: [analysisId], references: [id])
   analysisId      Int
   resources       Resource[]
+  category        String         @default("Core Technical Skills")
 }
 
 model Resource {
@@ -117,6 +128,10 @@ model Resource {
   url         String?
   description String
   type        String   // article/video/podcast/book/course/etc.
+  provider    String?
+  level       String?
+  aiRelevance String?
+  timeCommitment String?
   category    String
   tags        String
   isFree      Boolean  @default(true)

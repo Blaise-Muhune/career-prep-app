@@ -51,13 +51,13 @@ export async function GET(request: NextRequest) {
         }));
 
         return NextResponse.json(stepsWithProgress);
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Error fetching steps:', error);
         // Return a more detailed error response
         return NextResponse.json({ 
             error: 'Failed to fetch steps',
-            details: error.message,
-            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+            details: error instanceof Error ? error.message : 'Unknown error',
+            stack: process.env.NODE_ENV === 'development' ? (error as Error).stack : undefined
         }, { status: 500 });
     }
 } 
