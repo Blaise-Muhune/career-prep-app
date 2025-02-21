@@ -52,7 +52,7 @@ export default function StepPage() {
   const [loading, setLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
 
-  const fetchStepData = async () => {
+  const fetchStepData = React.useCallback(async () => {
     try {
       const currentUser = auth.currentUser;
       if (!currentUser) {
@@ -122,7 +122,7 @@ export default function StepPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
 
   useEffect(() => {
     console.log('Setting up auth state listener');
@@ -140,7 +140,7 @@ export default function StepPage() {
       console.log('Cleaning up auth state listener');
       unsubscribe();
     };
-  }, [params?.stepId]);
+  }, [params?.stepId, fetchStepData]);
 
   const handleToggleStep = async () => {
     const currentUser = auth.currentUser;
