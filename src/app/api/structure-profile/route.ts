@@ -13,13 +13,6 @@ interface StructuredData {
     careerMotivations?: string[];
 }
 
-interface Profile {
-    bio?: string;
-    dreamJob?: string;
-    skills: Skill[];
-    structuredData?: StructuredData;
-}
-
 interface ProgressPercentage {
     "technical-proficiency": number;
     "domain-adaptation": number;
