@@ -389,7 +389,6 @@ export async function POST(request: NextRequest) {
                         urgency: task.urgency,
                         priority: task.priority,
                         skillType: task.skillType,
-                        skillsGained: task.skillsGained || [],
                         resources: task.resources || [],
                         successMetrics: task.successMetrics || []
                     }))
