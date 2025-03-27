@@ -1,8 +1,8 @@
 'use client'
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
-import { getAuth } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -126,7 +126,30 @@ const INDUSTRY_PREFERENCES = [
 export default function Home() {
   const router = useRouter();
   const auth = getAuth();
+  const [isLoading, setIsLoading] = useState(true);
 
+  useEffect(() => {
+
+    
+    const unsubscribe = onAuthStateChanged(auth, (user: User | null) => {
+      if ( user && user.metadata.creationTime !== user.metadata.lastSignInTime) {
+        console.log('old user')
+        router.push('/dashboard');
+      }else if(user){
+        console.log('new user')
+        // router.push('/auth');
+        setIsLoading(false);
+      }else{
+        console.log('no user')
+        router.push('/auth');
+      }
+
+    });
+
+    return () => unsubscribe();
+  }, [router]);
+
+  
   const [formData, setFormData] = useState<FormData>({
     dreamJob: '',
     dreamCompany: '',
@@ -152,7 +175,14 @@ export default function Home() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentSkill, setCurrentSkill] = useState('');
-
+  
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <Loader2 className="h-10 w-10 animate-spin" />
+      </div>
+    );
+  }
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setFormData({
       ...formData,

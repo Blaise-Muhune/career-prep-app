@@ -12,10 +12,12 @@ import {
   CheckCircle, Clock, Circle, Trophy, Target, Sparkles,
   GraduationCap, BookOpen, Rocket, Users,Code,
   ChevronDown, ChevronUp,
+  ExternalLink,
 } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from 'framer-motion';
 import { Badge } from "@/components/ui/badge";
+import { LucideIcon } from 'lucide-react';
 
 interface Task {
   id: number;
@@ -92,6 +94,7 @@ interface CareerAnalysis {
     purpose: string;
     timeline: string;
     prerequisites: string[];
+    url: string;
   }>;
   projectRecommendations: Array<{
     name: string;
@@ -118,6 +121,44 @@ interface CareerAnalysis {
     skillDecay: string;
     marketCompetition: string;
   };
+  skillsAnalysis: {
+    currentSkills: Array<{
+      name: string;
+      category: 'technical' | 'domain' | 'soft' | 'future';
+      proficiency: 'beginner' | 'intermediate' | 'advanced';
+      relevance: 'high' | 'medium' | 'low';
+      status: 'active' | 'growing' | 'needs-update';
+    }>;
+    recommendedSkills: Array<{
+      name: string;
+      category: 'technical' | 'domain' | 'soft' | 'future';
+      priority: 'high' | 'medium' | 'low';
+      timeToAcquire: string;
+      relevance: 'current-market' | 'emerging-trend' | 'future-requirement';
+    }>;
+    skillCategories: {
+      technical: string[];
+      domain: string[];
+      soft: string[];
+      future: string[];
+    };
+  };
+}
+
+interface ExpandedSections {
+  detailedProgress: boolean;
+  careerInsights: boolean;
+  riskAssessment: boolean;
+  certifications: boolean;
+  projects: boolean;
+  community: boolean;
+  skills: boolean;
+}
+
+interface TabDefinition {
+  id: keyof ExpandedSections;
+  icon: LucideIcon;
+  label: string;
 }
 
 function DualProgressBar({ 
@@ -173,7 +214,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [steps, setSteps] = useState<Array<Step>>([]);
-  const [expandedSections, setExpandedSections] = useState({
+  const [expandedSections, setExpandedSections] = useState<ExpandedSections>({
     detailedProgress: false,
     careerInsights: false,
     riskAssessment: false,
@@ -274,6 +315,16 @@ export default function DashboardPage() {
               automationThreat: "low",
               skillDecay: "No risk factors identified",
               marketCompetition: "Market competition data not available"
+            },
+            skillsAnalysis: {
+              currentSkills: [],
+              recommendedSkills: [],
+              skillCategories: {
+                technical: [],
+                domain: [],
+                soft: [],
+                future: []
+              }
             }
           });
           setSteps([]);
@@ -328,55 +379,61 @@ export default function DashboardPage() {
       ) : (
         <>
           {/* Header Section */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="relative p-8 rounded-3xl bg-gradient-to-br from-background/80 via-accent/5 to-background/80 backdrop-blur-xl border border-accent/10 overflow-hidden">
+            <div className="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
+            <div className="relative flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div className="space-y-2">
-              <h1 className="text-4xl font-bold flex items-center gap-3">
+                <h1 className="text-4xl font-bold flex items-center gap-3 bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent">
                 Welcome back, {userData?.name}!
-                <span className="text-primary">
-                  <Trophy className="h-8 w-8" />
+                  <span className="p-2 rounded-xl bg-primary/10 backdrop-blur-sm">
+                    <Trophy className="h-8 w-8 text-primary" />
                 </span>
               </h1>
-              <p className="text-muted-foreground text-lg">
+                <p className="text-muted-foreground/80 text-lg">
                 Let&apos;s continue your journey to becoming a{' '}
                 <span className="text-primary font-medium">{userData?.dreamJob || 'your dream job'}</span>
               </p>
+              </div>
             </div>
           </div>
 
           {/* Main Content */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Quick Overview Card */}
-            <Card className="lg:col-span-2 shadow-lg hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-background to-accent/20">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-2xl">
-                  <div className="p-2 bg-primary/10 rounded-full">
-                    <Target className="h-7 w-7 text-primary" />
+            <Card className="lg:col-span-2 shadow-2xl hover:shadow-3xl transition-all duration-500 overflow-hidden border-0 bg-gradient-to-br from-background/80 via-accent/5 to-background/80 backdrop-blur-xl">
+              <CardHeader className="border-b border-accent/10 bg-gradient-to-r from-accent/5 via-primary/5 to-accent/5 backdrop-blur-xl py-8">
+                <CardTitle className="text-3xl flex items-center gap-3 bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent">
+                  <div className="p-3 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/5 backdrop-blur-xl shadow-inner">
+                    <Target className="h-7 w-7 text-primary animate-pulse" />
                   </div>
                   Career Progress
                 </CardTitle>
-                <CardDescription className="text-base">
+                <CardDescription className="text-lg text-muted-foreground/80">
                   Your journey at a glance
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
+              <CardContent className="p-6 space-y-8">
                   {/* Overall Progress */}
-                  <div className="p-6 rounded-xl bg-gradient-to-br from-primary/10 via-transparent to-primary/5 border border-primary/20">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold flex items-center gap-2">
-                        <Trophy className="h-5 w-5 text-primary" />
+                <div className="relative p-6 rounded-3xl bg-gradient-to-br from-primary/5 via-accent/5 to-background border border-accent/10 overflow-hidden">
+                  <div className="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
+                  <div className="relative space-y-6">
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-1">
+                        <h3 className="text-2xl font-semibold bg-gradient-to-br from-primary to-primary/70 bg-clip-text text-transparent flex items-center gap-2">
+                          <Trophy className="h-6 w-6 text-primary" />
                         Overall Progress
                       </h3>
+                      </div>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => toggleSection('detailedProgress')}
-                        className="text-primary"
+                        className="text-primary hover:bg-primary/10 transition-all duration-300"
                       >
                         {expandedSections.detailedProgress ? (
-                          <ChevronUp className="h-4 w-4" />
+                          <ChevronUp className="h-5 w-5" />
                         ) : (
-                          <ChevronDown className="h-4 w-4" />
+                          <ChevronDown className="h-5 w-5" />
                         )}
                       </Button>
                     </div>
@@ -392,9 +449,9 @@ export default function DashboardPage() {
                       <div className="flex justify-between text-sm">
                         <div className="flex items-center gap-2">
                           <div className="w-3 h-3 rounded-full bg-blue-500" />
-                          <span>Preexisting Experience</span>
+                          <span className="text-muted-foreground">Preexisting Experience</span>
                         </div>
-                        <span className="font-medium">
+                        <span className="font-medium text-blue-500">
                           {Math.min(Math.round((careerAnalysis?.progressPercentage?.["technical-proficiency"] || 0) + 
                           (careerAnalysis?.progressPercentage?.["domain-adaptation"] || 0)) / 2, 40)}%
                         </span>
@@ -403,9 +460,9 @@ export default function DashboardPage() {
                       <div className="flex justify-between text-sm">
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 rounded-full bg-green-500" />
-                          <span>Progress with Our App</span>
+                          <span className="text-muted-foreground">Progress with Our App</span>
                         </div>
-                        <span className="font-medium">
+                        <span className="font-medium text-green-500">
                           {Math.round((steps.filter(step => step.progress.status === 'COMPLETED').length / Math.max(steps.length, 1)) * 60)}%
                         </span>
                       </div>
@@ -417,93 +474,130 @@ export default function DashboardPage() {
                           initial={{ height: 0, opacity: 0 }}
                           animate={{ height: "auto", opacity: 1 }}
                           exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.2 }}
-                          className="mt-6 space-y-4 overflow-hidden"
+                          transition={{ duration: 0.3 }}
+                          className="space-y-4 overflow-hidden pt-4"
                         >
                           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                            {[
+                              {
+                                title: "Technical",
+                                icon: GraduationCap,
+                                color: "blue",
+                                value: careerAnalysis?.progressPercentage?.["technical-proficiency"]
+                              },
+                              {
+                                title: "Domain",
+                                icon: BookOpen,
+                                color: "purple",
+                                value: careerAnalysis?.progressPercentage?.["domain-adaptation"]
+                              },
+                              {
+                                title: "Future",
+                                icon: Rocket,
+                                color: "orange",
+                                value: careerAnalysis?.progressPercentage?.["future-readiness"]
+                              },
+                              {
+                                title: "Network",
+                                icon: Users,
+                                color: "green",
+                                value: careerAnalysis?.progressPercentage?.["network-strength"]
+                              }
+                            ].map((stat, index) => (
+                              <motion.div
+                                key={stat.title}
+                                initial={{ scale: 0.95, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                transition={{ delay: index * 0.1 }}
+                                className={cn(
+                                  "group relative p-4 rounded-2xl border backdrop-blur-xl",
+                                  `border-${stat.color}-500/20 bg-gradient-to-br from-${stat.color}-500/10 via-background to-${stat.color}-500/5`
+                                )}
+                              >
+                                <div className="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
+                                <div className="relative space-y-2">
                               <div className="flex items-center gap-2">
-                                <GraduationCap className="h-5 w-5 text-blue-500" />
-                                <span className="font-medium text-blue-500">Technical</span>
+                                    <div className={cn(
+                                      "p-2 rounded-xl transition-colors duration-300",
+                                      `bg-${stat.color}-500/10 group-hover:bg-${stat.color}-500/20`
+                                    )}>
+                                      <stat.icon className={`h-5 w-5 text-${stat.color}-500`} />
                               </div>
-                              <div className="mt-2 text-2xl font-bold">
-                                {Math.round(careerAnalysis?.progressPercentage?.["technical-proficiency"] || 0)}%
+                                    <span className={`font-medium text-${stat.color}-500`}>{stat.title}</span>
                               </div>
+                                  <div className="text-2xl font-bold">
+                                    {Math.round(stat.value || 0)}%
                             </div>
-                            
-                            <div className="p-4 rounded-lg bg-purple-500/10 border border-purple-500/20">
-                              <div className="flex items-center gap-2">
-                                <BookOpen className="h-5 w-5 text-purple-500" />
-                                <span className="font-medium text-purple-500">Domain</span>
                               </div>
-                              <div className="mt-2 text-2xl font-bold">
-                                {Math.round(careerAnalysis?.progressPercentage?.["domain-adaptation"] || 0)}%
-                              </div>
-                            </div>
-                            
-                            <div className="p-4 rounded-lg bg-orange-500/10 border border-orange-500/20">
-                              <div className="flex items-center gap-2">
-                                <Rocket className="h-5 w-5 text-orange-500" />
-                                <span className="font-medium text-orange-500">Future</span>
-                              </div>
-                              <div className="mt-2 text-2xl font-bold">
-                                {Math.round(careerAnalysis?.progressPercentage?.["future-readiness"] || 0)}%
-                              </div>
-                            </div>
-                            
-                            <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
-                              <div className="flex items-center gap-2">
-                                <Users className="h-5 w-5 text-green-500" />
-                                <span className="font-medium text-green-500">Network</span>
-                              </div>
-                              <div className="mt-2 text-2xl font-bold">
-                                {Math.round(careerAnalysis?.progressPercentage?.["network-strength"] || 0)}%
-                              </div>
-                            </div>
+                              </motion.div>
+                            ))}
                           </div>
                         </motion.div>
                       )}
                     </AnimatePresence>
                   </div>
+                  </div>
 
                   {/* Career Insights */}
-                  <div className="space-y-4">
+                <div className="relative p-6 rounded-3xl bg-gradient-to-br from-primary/5 via-accent/5 to-background border border-accent/10 overflow-hidden">
+                  <div className="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
+                  <div className="relative space-y-6">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-semibold flex items-center gap-2">
-                        <Sparkles className="h-5 w-5 text-primary" />
+                      <div className="space-y-1">
+                        <h3 className="text-2xl font-semibold bg-gradient-to-br from-primary to-primary/70 bg-clip-text text-transparent flex items-center gap-2">
+                          <Sparkles className="h-6 w-6 text-primary" />
                         Career Insights
                       </h3>
+                      </div>
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => toggleSection('careerInsights')}
-                        className="text-primary"
+                        className="text-primary hover:bg-primary/10 transition-all duration-300"
                       >
                         {expandedSections.careerInsights ? (
-                          <ChevronUp className="h-4 w-4" />
+                          <ChevronUp className="h-5 w-5" />
                         ) : (
-                          <ChevronDown className="h-4 w-4" />
+                          <ChevronDown className="h-5 w-5" />
                         )}
                       </Button>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <h4 className="font-medium text-primary">Key Strengths</h4>
+                    <div className="grid grid-cols-2 gap-6">
+                      <div className="space-y-3">
+                        <h4 className="font-medium text-primary flex items-center gap-2">
+                          <div className="p-1.5 rounded-lg bg-primary/10">
+                            <Trophy className="h-4 w-4 text-primary" />
+                          </div>
+                          Key Strengths
+                        </h4>
                         <div className="flex flex-wrap gap-2">
                           {careerAnalysis?.trendAnalysis?.emergingTechnologies?.slice(0, 3).map((tech, index) => (
-                            <Badge key={index} variant="secondary" className="bg-primary/10 text-primary border-primary/20">
+                            <Badge
+                              key={index}
+                              variant="secondary"
+                              className="bg-primary/10 hover:bg-primary/20 text-primary border-primary/20 transition-all duration-300"
+                            >
                               {tech}
                             </Badge>
                           ))}
                         </div>
                   </div>
 
-                      <div className="space-y-2">
-                        <h4 className="font-medium text-primary">Growth Areas</h4>
+                      <div className="space-y-3">
+                        <h4 className="font-medium text-primary flex items-center gap-2">
+                          <div className="p-1.5 rounded-lg bg-primary/10">
+                            <Target className="h-4 w-4 text-primary" />
+                          </div>
+                          Growth Areas
+                        </h4>
                         <div className="flex flex-wrap gap-2">
                           {careerAnalysis?.trendAnalysis?.industryOpportunities?.slice(0, 3).map((opp, index) => (
-                            <Badge key={index} variant="secondary" className="bg-primary/10 text-primary border-primary/20">
+                            <Badge
+                              key={index}
+                              variant="secondary"
+                              className="bg-primary/10 hover:bg-primary/20 text-primary border-primary/20 transition-all duration-300"
+                            >
                               {opp}
                             </Badge>
                           ))}
@@ -517,51 +611,76 @@ export default function DashboardPage() {
                           initial={{ height: 0, opacity: 0 }}
                           animate={{ height: "auto", opacity: 1 }}
                           exit={{ height: 0, opacity: 0 }}
-                          transition={{ duration: 0.2 }}
-                          className="space-y-4 overflow-hidden"
+                          transition={{ duration: 0.3 }}
+                          className="space-y-6 overflow-hidden pt-4"
                         >
-                          {/* Risk Assessment */}
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className={cn(
-                              "p-4 rounded-lg border transition-all duration-300",
-                              careerAnalysis?.riskAssessment?.automationThreat === 'high' 
-                                ? 'bg-red-500/10 border-red-500/20' 
-                                : careerAnalysis?.riskAssessment?.automationThreat === 'medium'
-                                ? 'bg-yellow-500/10 border-yellow-500/20'
-                                : 'bg-green-500/10 border-green-500/20'
-                            )}>
-                              <div className="flex items-center justify-between">
-                                <h3 className="font-medium">Automation Risk</h3>
+                            {[
+                              {
+                                title: "Automation Risk",
+                                icon: Sparkles,
+                                level: careerAnalysis?.riskAssessment?.automationThreat,
+                                description: careerAnalysis?.riskAssessment?.skillDecay
+                              },
+                              {
+                                title: "Skills at Risk",
+                                icon: Target,
+                                items: careerAnalysis?.trendAnalysis?.atRiskSkills
+                              },
+                              {
+                                title: "Market Competition",
+                                icon: Users,
+                                description: careerAnalysis?.riskAssessment?.marketCompetition
+                              }
+                            ].map((section, index) => (
+                              <motion.div
+                                key={section.title}
+                                initial={{ scale: 0.95, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                transition={{ delay: index * 0.1 }}
+                                className={cn(
+                                  "group relative p-4 rounded-2xl border border-accent/10 backdrop-blur-xl",
+                                  "bg-gradient-to-br from-accent/10 via-background to-accent/5"
+                                )}
+                              >
+                                <div className="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
+                                <div className="relative space-y-3">
+                                  <div className="flex items-center gap-2">
+                                    <div className="p-1.5 rounded-lg bg-primary/10 group-hover:bg-primary/20 transition-colors duration-300">
+                                      <section.icon className="h-4 w-4 text-primary" />
+                                    </div>
+                                    <h3 className="font-medium">{section.title}</h3>
+                                    {section.level && (
                                 <Badge variant={
-                                  careerAnalysis?.riskAssessment?.automationThreat === 'high' ? 'destructive' :
-                                  careerAnalysis?.riskAssessment?.automationThreat === 'medium' ? 'secondary' :
+                                        section.level === 'high' ? 'destructive' :
+                                        section.level === 'medium' ? 'secondary' :
                                   'default'
                                 }>
-                                  {careerAnalysis?.riskAssessment?.automationThreat || 'Unknown'}
+                                        {section.level}
                                 </Badge>
+                                    )}
                               </div>
-                              <p className="text-sm text-muted-foreground mt-2">
-                                {careerAnalysis?.riskAssessment?.skillDecay || 'No risk factors identified'}
-                              </p>
-                            </div>
-
-                            <div className="p-4 rounded-lg border bg-accent/30">
-                              <h3 className="font-medium mb-2">Skills at Risk</h3>
+                                  {section.description && (
+                                    <p className="text-sm text-muted-foreground">
+                                      {section.description}
+                                    </p>
+                                  )}
+                                  {section.items && (
                               <div className="flex flex-wrap gap-2">
-                                {careerAnalysis?.trendAnalysis?.atRiskSkills?.map((skill, index) => (
-                                  <Badge key={index} variant="outline" className="text-xs">
-                                    {skill}
+                                      {section.items.map((item, i) => (
+                                        <Badge
+                                          key={i}
+                                          variant="outline"
+                                          className="bg-accent/10 hover:bg-accent/20 transition-colors duration-300 text-xs"
+                                        >
+                                          {item}
                                   </Badge>
                                 ))}
                               </div>
+                                  )}
                             </div>
-
-                            <div className="p-4 rounded-lg border bg-accent/30">
-                              <h3 className="font-medium mb-2">Market Competition</h3>
-                    <p className="text-sm text-muted-foreground">
-                                {careerAnalysis?.riskAssessment?.marketCompetition || 'Market competition data not available'}
-                    </p>
-                            </div>
+                              </motion.div>
+                            ))}
                           </div>
                         </motion.div>
                       )}
@@ -572,48 +691,66 @@ export default function DashboardPage() {
             </Card>
 
             {/* Next Steps Card */}
-            <Card className="shadow-lg hover:shadow-xl transition-all duration-300">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <div className="p-2 bg-primary/10 rounded-full">
-                    <ListChecks className="h-6 w-6 text-primary" />
+            <Card className="shadow-2xl hover:shadow-3xl transition-all duration-500 overflow-hidden border-0 bg-gradient-to-br from-background/80 via-accent/5 to-background/80 backdrop-blur-xl">
+              <CardHeader className="border-b border-accent/10 bg-gradient-to-r from-accent/5 via-primary/5 to-accent/5 backdrop-blur-xl py-8">
+                <CardTitle className="text-3xl flex items-center gap-3 bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent">
+                  <div className="p-3 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/5 backdrop-blur-xl shadow-inner">
+                    <ListChecks className="h-6 w-6 text-primary animate-pulse" />
                   </div>
                   Next Steps
                 </CardTitle>
-                <CardDescription>Your next career milestones</CardDescription>
+                <CardDescription className="text-lg text-muted-foreground/80">
+                  Your next career milestones
+                </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-6">
                 <div className="space-y-4">
-                  {steps.slice(0, 3).map((step) => (
+                  {steps.slice(0, 3).map((step, index) => (
                     <Link href={`/steps/${step.id}`} key={step.id}>
-                      <div className="group relative p-4 rounded-lg bg-accent/50 hover:bg-accent/70 transition-all duration-200 cursor-pointer">
+                      <motion.div
+                        initial={{ scale: 0.95, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ delay: index * 0.1 }}
+                        className="group relative p-4 rounded-xl border border-accent/10 bg-gradient-to-br from-accent/10 via-background to-accent/5 backdrop-blur-xl hover:bg-accent/10 transition-all duration-300 cursor-pointer"
+                      >
+                        <div className="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
                         <div className="relative flex items-start gap-4">
                           <div className="flex-shrink-0 mt-1">
-                            <div className="p-1 rounded-full bg-muted">
+                            <div className={cn(
+                              "p-2 rounded-xl transition-colors duration-300",
+                              step.progress.status === 'COMPLETED'
+                                ? "bg-green-500/10 group-hover:bg-green-500/20"
+                                : step.progress.status === 'IN_PROGRESS'
+                                ? "bg-blue-500/10 group-hover:bg-blue-500/20"
+                                : "bg-yellow-500/10 group-hover:bg-yellow-500/20"
+                            )}>
                               {step.progress.status === 'COMPLETED' ? (
                                 <CheckCircle className="h-5 w-5 text-green-500" />
                               ) : step.progress.status === 'IN_PROGRESS' ? (
                                 <Clock className="h-5 w-5 text-blue-500" />
                               ) : (
-                                <Circle className="h-5 w-5 text-muted-foreground" />
+                                <Circle className="h-5 w-5 text-yellow-500" />
                               )}
                             </div>
                           </div>
                           
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-4">
-                              <div>
+                              <div className="space-y-1">
                                 <h3 className="font-medium text-base group-hover:text-primary transition-colors">
                                   {step.title}
                                 </h3>
-                                <p className="text-muted-foreground mt-1 line-clamp-2">
+                                <p className="text-sm text-muted-foreground group-hover:text-muted-foreground/80 line-clamp-2">
                                   {step.description}
                                 </p>
                               </div>
                               <Badge className={cn(
-                                step.progress.status === 'COMPLETED' ? 'bg-green-500/10 text-green-500 border-green-500/20' :
-                                step.progress.status === 'IN_PROGRESS' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' :
-                                'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'
+                                "transition-colors duration-300",
+                                step.progress.status === 'COMPLETED'
+                                  ? "bg-green-500/10 text-green-500 border-green-500/20"
+                                  : step.progress.status === 'IN_PROGRESS'
+                                  ? "bg-blue-500/10 text-blue-500 border-blue-500/20"
+                                  : "bg-yellow-500/10 text-yellow-500 border-yellow-500/20"
                               )}>
                                 {step.progress.status.replace('_', ' ')}
                               </Badge>
@@ -622,18 +759,18 @@ export default function DashboardPage() {
                           
                           <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
                         </div>
-                      </div>
+                      </motion.div>
                     </Link>
                   ))}
 
                   <Button 
                     asChild 
                     variant="outline" 
-                    className="w-full mt-4 bg-accent/50 hover:bg-accent hover:text-accent-foreground transition-all duration-200"
+                    className="w-full mt-4 bg-gradient-to-r from-primary/10 via-accent/10 to-primary/10 hover:bg-accent/20 transition-all duration-300 border-accent/20"
                   >
                     <Link href="/steps" className="flex items-center justify-center gap-2">
                       <span>View All Steps</span>
-                      <ChevronRight className="h-4 w-4" />
+                      <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                     </Link>
                   </Button>
                 </div>
@@ -642,329 +779,725 @@ export default function DashboardPage() {
           </div>
 
           {/* Additional Career Resources */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-            {/* Skills Progress */}
-            <Card className="shadow-lg hover:shadow-xl transition-all duration-300">
-            <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 bg-primary/10 rounded-full">
-                      <Code className="h-6 w-6 text-primary" />
+          <div className="mt-6">
+            <Card className="shadow-2xl hover:shadow-3xl transition-all duration-500 overflow-hidden border-0 bg-gradient-to-br from-background/80 via-accent/5 to-background/80 backdrop-blur-xl">
+              <CardHeader className="border-b border-accent/10 bg-gradient-to-r from-accent/5 via-primary/5 to-accent/5 backdrop-blur-xl py-8">
+                <CardTitle className="text-3xl flex items-center gap-3 bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent">
+                  <div className="p-3 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/5 backdrop-blur-xl shadow-inner">
+                    <Sparkles className="h-8 w-8 text-primary animate-pulse" />
                     </div>
-                    Skills Progress
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => toggleSection('skills')}
-                    className="text-primary"
-                  >
-                    {expandedSections.skills ? (
-                      <ChevronUp className="h-4 w-4" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4" />
-                    )}
-                  </Button>
+                  Career Resources
                 </CardTitle>
-            </CardHeader>
-            <CardContent>
-                <AnimatePresence>
-                  {expandedSections.skills ? (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="space-y-4"
-                    >
-                      {/* Technical Skills */}
-                      <div className="space-y-2">
-                        <h3 className="font-medium text-primary">Technical Skills</h3>
-                        <div className="space-y-2">
-                          {steps
-                            .filter(step => step.skillType === 'technical')
-                            .map((step, index) => (
-                              <div key={index} className="flex items-center gap-2">
-                                {step.status === 'COMPLETED' ? (
-                                  <CheckCircle className="h-4 w-4 text-green-500" />
-                                ) : (
-                                  <Circle className="h-4 w-4 text-muted-foreground" />
+                <CardDescription className="text-lg text-muted-foreground/80">
+                  Your personalized pathway to professional excellence
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="flex flex-col">
+                  {/* Tab Buttons */}
+                  <div className="flex flex-col sm:flex-row border-b border-accent/10 bg-gradient-to-r from-accent/5 via-background to-accent/5">
+                    <div className="flex items-center justify-between px-6 py-3 sm:py-0">
+                      <div className="flex gap-2 overflow-x-auto no-scrollbar">
+                        {([
+                          { 
+                            id: 'skills' as const, 
+                            icon: Code, 
+                            label: 'Skills Progress',
+                            color: 'from-blue-500/20 to-primary/20'
+                          },
+                          { 
+                            id: 'certifications' as const, 
+                            icon: GraduationCap, 
+                            label: 'Certifications',
+                            color: 'from-purple-500/20 to-blue-500/20'
+                          },
+                          { 
+                            id: 'projects' as const, 
+                            icon: Code, 
+                            label: 'Project Recommendations',
+                            color: 'from-orange-500/20 to-purple-500/20'
+                          },
+                          { 
+                            id: 'community' as const, 
+                            icon: Users, 
+                            label: 'Community',
+                            color: 'from-green-500/20 to-orange-500/20'
+                          }
+                        ] as const).map((tab: TabDefinition & { color: string }) => (
+                  <Button
+                            key={tab.id}
+                    variant="ghost"
+                            className={cn(
+                              "relative min-w-[140px] h-14 px-4 rounded-none border-0",
+                              "transition-all duration-300 ease-in-out",
+                              expandedSections[tab.id] 
+                                ? "text-primary font-medium bg-gradient-to-b from-transparent via-transparent to-primary/5" 
+                                : "text-muted-foreground hover:text-primary hover:bg-accent/5",
+                              "group overflow-hidden"
+                            )}
+                            onClick={() => {
+                              const newState: ExpandedSections = {
+                                ...expandedSections,
+                                detailedProgress: false,
+                                careerInsights: false,
+                                riskAssessment: false,
+                                skills: false,
+                                certifications: false,
+                                projects: false,
+                                community: false,
+                                [tab.id]: true
+                              };
+                              setExpandedSections(newState);
+                            }}
+                          >
+                            {/* Background Effects */}
+                            {expandedSections[tab.id] && (
+                              <motion.div
+                                layoutId="tabBackground"
+                                className={cn(
+                                  "absolute inset-0 bg-gradient-to-r opacity-20",
+                                  tab.color
                                 )}
-                                <span className={cn(
-                                  "text-sm",
-                                  step.status === 'COMPLETED' ? "text-green-500" : "text-muted-foreground"
-                                )}>
-                                  {step.title}
-                                </span>
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 0.2 }}
+                                exit={{ opacity: 0 }}
+                                transition={{ duration: 0.3 }}
+                              />
+                            )}
+                            
+                            <div className="relative flex flex-col items-center gap-1">
+                              <div className={cn(
+                                "p-1.5 rounded-lg transition-all duration-300 transform",
+                                expandedSections[tab.id]
+                                  ? "scale-110 bg-primary/10"
+                                  : "bg-transparent group-hover:scale-110 group-hover:bg-primary/5"
+                              )}>
+                                <tab.icon className={cn(
+                                  "h-4 w-4 transition-colors duration-300",
+                                  expandedSections[tab.id]
+                                    ? "text-primary"
+                                    : "text-muted-foreground group-hover:text-primary"
+                                )} />
                               </div>
+                              
+                                <span className={cn(
+                                "text-sm transition-colors duration-300",
+                                expandedSections[tab.id]
+                                  ? "text-primary"
+                                  : "text-muted-foreground group-hover:text-primary"
+                              )}>
+                                {tab.label}
+                                </span>
+
+                              {/* Active Indicator */}
+                              {expandedSections[tab.id] && (
+                                <motion.div
+                                  layoutId="activeIndicator"
+                                  className="absolute -bottom-[1.5px] left-0 right-0 h-0.5 bg-primary"
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  exit={{ opacity: 0 }}
+                                  transition={{ duration: 0.3 }}
+                                />
+                              )}
+                              </div>
+                          </Button>
                             ))}
+                      </div>
                         </div>
                       </div>
 
-                      {/* Domain Skills */}
-                      <div className="space-y-2">
-                        <h3 className="font-medium text-primary">Domain Knowledge</h3>
-                        <div className="space-y-2">
-                          {steps
-                            .filter(step => step.skillType === 'domain')
-                            .map((step, index) => (
-                              <div key={index} className="flex items-center gap-2">
-                                {step.status === 'COMPLETED' ? (
-                                  <CheckCircle className="h-4 w-4 text-purple-500" />
-                                ) : (
-                                  <Circle className="h-4 w-4 text-muted-foreground" />
-                                )}
-                                <span className={cn(
-                                  "text-sm",
-                                  step.status === 'COMPLETED' ? "text-purple-500" : "text-muted-foreground"
-                                )}>
-                                  {step.title}
-                                </span>
+                  {/* Tab Content */}
+                  <div className="min-h-[500px] p-8 bg-gradient-to-br from-transparent via-accent/5 to-transparent">
+                    <AnimatePresence mode="wait">
+                      {/* Skills Progress Content */}
+                      {expandedSections.skills && (
+                        <motion.div
+                          key="skills"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="space-y-8"
+                        >
+                          {/* Skills Overview */}
+                          <motion.div
+                            initial={{ y: 20, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ delay: 0.1 }}
+                            className="relative p-6 rounded-3xl bg-gradient-to-br from-primary/5 via-accent/5 to-background border border-accent/10 overflow-hidden"
+                          >
+                            <div className="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
+                            <div className="relative flex items-center justify-between">
+                              <div className="space-y-1">
+                                <h3 className="text-2xl font-semibold bg-gradient-to-br from-primary to-primary/70 bg-clip-text text-transparent">
+                                  Skills Mastery Path
+                                </h3>
+                                <p className="text-muted-foreground">Track your skill development journey</p>
                               </div>
-                            ))}
-                        </div>
-                      </div>
-
-                      {/* Soft Skills */}
-                      <div className="space-y-2">
-                        <h3 className="font-medium text-primary">Soft Skills</h3>
-                        <div className="space-y-2">
-                          {steps
-                            .filter(step => step.skillType === 'soft')
-                            .map((step, index) => (
-                              <div key={index} className="flex items-center gap-2">
-                                {step.status === 'COMPLETED' ? (
-                                  <CheckCircle className="h-4 w-4 text-green-500" />
-                                ) : (
-                                  <Circle className="h-4 w-4 text-muted-foreground" />
-                                )}
-                                <span className={cn(
-                                  "text-sm",
-                                  step.status === 'COMPLETED' ? "text-green-500" : "text-muted-foreground"
-                                )}>
-                                  {step.title}
-                                </span>
+                              <div className="flex gap-3">
+                                <div className="p-3 rounded-2xl bg-primary/10 backdrop-blur-sm">
+                                  <Code className="h-6 w-6 text-primary" />
+                                </div>
+                                <div className="p-3 rounded-2xl bg-purple-500/10 backdrop-blur-sm">
+                                  <BookOpen className="h-6 w-6 text-purple-500" />
+                                </div>
+                                <div className="p-3 rounded-2xl bg-orange-500/10 backdrop-blur-sm">
+                                  <Rocket className="h-6 w-6 text-orange-500" />
+                                </div>
                               </div>
-                            ))}
-                        </div>
-                      </div>
+                            </div>
+                          </motion.div>
 
-                      {/* Future Skills */}
-                      <div className="space-y-2">
-                        <h3 className="font-medium text-primary">Future-Ready Skills</h3>
-                        <div className="space-y-2">
-                          {steps
-                            .filter(step => step.skillType === 'future')
-                            .map((step, index) => (
-                              <div key={index} className="flex items-center gap-2">
-                                {step.status === 'COMPLETED' ? (
-                                  <CheckCircle className="h-4 w-4 text-orange-500" />
-                                ) : (
-                                  <Circle className="h-4 w-4 text-muted-foreground" />
-                                )}
-                                <span className={cn(
-                                  "text-sm",
-                                  step.status === 'COMPLETED' ? "text-orange-500" : "text-muted-foreground"
-                                )}>
-                                  {step.title}
-                                </span>
-                                {step.status === 'IN_PROGRESS' && (
-                                  <Badge variant="secondary" className="text-xs ml-2">In Progress</Badge>
-                                )}
+                          {/* Current Skills */}
+                          <motion.div
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ delay: 0.2 }}
+                            className="relative p-6 rounded-2xl border border-accent/10 bg-gradient-to-br from-accent/10 via-background to-accent/5 backdrop-blur-xl"
+                          >
+                            <div className="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
+                            <div className="relative space-y-4">
+                              <div className="flex items-center gap-3">
+                                <div className="p-2 rounded-xl bg-primary/10">
+                                  <CheckCircle className="h-5 w-5 text-primary" />
+                                </div>
+                                <h4 className="text-lg font-medium">Current Skills</h4>
                               </div>
-                            ))}
-                        </div>
-                      </div>
-                    </motion.div>
-                  ) : (
-                    <div className="text-center text-muted-foreground p-4">
-                      Click to view your acquired skills
-                    </div>
-                  )}
-                </AnimatePresence>
-              </CardContent>
-            </Card>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-8">
+                                {careerAnalysis?.skillsAnalysis?.currentSkills.map((skill, index) => (
+                                  <motion.div
+                                    key={index}
+                                    initial={{ x: -10, opacity: 0 }}
+                                    animate={{ x: 0, opacity: 1 }}
+                                    transition={{ delay: index * 0.1 }}
+                                    className="relative flex items-start gap-3 p-4 rounded-xl bg-accent/10 hover:bg-accent/20 transition-all duration-300 group"
+                                  >
+                                    <div className="absolute left-0 top-0 bottom-0 w-1 rounded-full bg-gradient-to-b from-transparent via-primary/20 to-transparent" />
+                                    <div className="space-y-2 flex-1">
+                                      <div className="flex items-center justify-between">
+                                        <span className="font-medium">{skill.name}</span>
+                                        <Badge variant="outline" className={cn(
+                                          "transition-colors duration-300",
+                                          skill.proficiency === 'advanced' ? 'border-green-500/20 text-green-500' :
+                                          skill.proficiency === 'intermediate' ? 'border-blue-500/20 text-blue-500' :
+                                          'border-orange-500/20 text-orange-500'
+                                        )}>
+                                          {skill.proficiency}
+                                        </Badge>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <Badge variant="secondary" className="bg-primary/10 text-primary text-xs">
+                                          {skill.category}
+                                        </Badge>
+                                        <Badge variant="secondary" className={cn(
+                                          "text-xs",
+                                          skill.relevance === 'high' ? 'bg-green-500/10 text-green-500' :
+                                          skill.relevance === 'medium' ? 'bg-blue-500/10 text-blue-500' :
+                                          'bg-orange-500/10 text-orange-500'
+                                        )}>
+                                          {skill.relevance} relevance
+                                        </Badge>
+                                      </div>
+                                    </div>
+                                  </motion.div>
+                                ))}
+                              </div>
+                            </div>
+                          </motion.div>
 
-            {/* Certification Path */}
-            <Card className="shadow-lg hover:shadow-xl transition-all duration-300">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 bg-primary/10 rounded-full">
+                          {/* Recommended Skills */}
+                          <motion.div
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ delay: 0.3 }}
+                            className="relative p-6 rounded-2xl border border-accent/10 bg-gradient-to-br from-accent/10 via-background to-accent/5 backdrop-blur-xl"
+                          >
+                            <div className="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
+                            <div className="relative space-y-4">
+                              <div className="flex items-center gap-3">
+                                <div className="p-2 rounded-xl bg-primary/10">
+                                  <Target className="h-5 w-5 text-primary" />
+                                </div>
+                                <h4 className="text-lg font-medium">Recommended Skills</h4>
+                              </div>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-8">
+                                {careerAnalysis?.skillsAnalysis?.recommendedSkills.map((skill, index) => (
+                                  <motion.div
+                                    key={index}
+                                    initial={{ x: -10, opacity: 0 }}
+                                    animate={{ x: 0, opacity: 1 }}
+                                    transition={{ delay: index * 0.1 }}
+                                    className="relative flex items-start gap-3 p-4 rounded-xl bg-accent/10 hover:bg-accent/20 transition-all duration-300 group"
+                                  >
+                                    <div className="absolute left-0 top-0 bottom-0 w-1 rounded-full bg-gradient-to-b from-transparent via-primary/20 to-transparent" />
+                                    <div className="space-y-2 flex-1">
+                                      <div className="flex items-center justify-between">
+                                        <span className="font-medium">{skill.name}</span>
+                                        <Badge variant="outline" className={cn(
+                                          "transition-colors duration-300",
+                                          skill.priority === 'high' ? 'border-red-500/20 text-red-500' :
+                                          skill.priority === 'medium' ? 'border-yellow-500/20 text-yellow-500' :
+                                          'border-blue-500/20 text-blue-500'
+                                        )}>
+                                          {skill.priority} priority
+                                        </Badge>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <Badge variant="secondary" className="bg-primary/10 text-primary text-xs">
+                                          {skill.category}
+                                        </Badge>
+                                        <Badge variant="secondary" className="bg-accent/10 text-xs">
+                                          {skill.timeToAcquire}
+                                        </Badge>
+                                      </div>
+                                      <Badge variant="outline" className={cn(
+                                        "text-xs",
+                                        skill.relevance === 'current-market' ? 'border-green-500/20 text-green-500' :
+                                        skill.relevance === 'emerging-trend' ? 'border-blue-500/20 text-blue-500' :
+                                        'border-purple-500/20 text-purple-500'
+                                      )}>
+                                        {skill.relevance.replace('-', ' ')}
+                                      </Badge>
+                                    </div>
+                                  </motion.div>
+                                ))}
+                              </div>
+                            </div>
+                          </motion.div>
+
+                          {/* Skills by Category */}
+                          <motion.div
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ delay: 0.4 }}
+                            className="grid grid-cols-1 md:grid-cols-2 gap-6"
+                          >
+                            {Object.entries(careerAnalysis?.skillsAnalysis?.skillCategories || {}).map(([category, skills], idx) => (
+                              <motion.div
+                                key={category}
+                                initial={{ scale: 0.95, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                transition={{ delay: idx * 0.1 }}
+                                className="relative p-6 rounded-2xl border border-accent/10 bg-gradient-to-br from-accent/10 via-background to-accent/5 backdrop-blur-xl"
+                              >
+                                <div className="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
+                                <div className="relative space-y-4">
+                                  <div className="flex items-center gap-3">
+                                    <div className="p-2 rounded-xl bg-primary/10">
+                                      {category === 'technical' ? <Code className="h-5 w-5 text-primary" /> :
+                                       category === 'domain' ? <BookOpen className="h-5 w-5 text-primary" /> :
+                                       category === 'soft' ? <Users className="h-5 w-5 text-primary" /> :
+                                       <Rocket className="h-5 w-5 text-primary" />}
+                                    </div>
+                                    <h4 className="text-lg font-medium capitalize">{category} Skills</h4>
+                                  </div>
+                                  <div className="flex flex-wrap gap-2 pl-8">
+                                    {skills.map((skill, index) => (
+                                      <Badge
+                                        key={index}
+                                        variant="secondary"
+                                        className="bg-primary/10 hover:bg-primary/20 text-primary text-xs transition-colors duration-300"
+                                      >
+                                        {skill}
+                                      </Badge>
+                                    ))}
+                                  </div>
+                                </div>
+                              </motion.div>
+                            ))}
+                          </motion.div>
+                        </motion.div>
+                      )}
+
+                      {/* Certifications Content */}
+                      {expandedSections.certifications && (
+                        <motion.div
+                          key="certifications"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="space-y-8"
+                        >
+                          {/* Certifications Overview */}
+                          <motion.div
+                            initial={{ y: 20, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ delay: 0.1 }}
+                            className="relative p-6 rounded-3xl bg-gradient-to-br from-primary/5 via-accent/5 to-background border border-accent/10 overflow-hidden"
+                          >
+                            <div className="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
+                            <div className="relative flex items-center justify-between">
+                              <div className="space-y-1">
+                                <h3 className="text-2xl font-semibold bg-gradient-to-br from-primary to-primary/70 bg-clip-text text-transparent">
+                                  Professional Certifications
+                                </h3>
+                                <p className="text-muted-foreground">Validate your expertise with industry-recognized credentials</p>
+                              </div>
+                              <div className="p-3 rounded-2xl bg-primary/10 backdrop-blur-sm">
                       <GraduationCap className="h-6 w-6 text-primary" />
                     </div>
-                    Certifications
                   </div>
-                <Button 
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => toggleSection('certifications')}
-                    className="text-primary"
-                  >
-                    {expandedSections.certifications ? (
-                      <ChevronUp className="h-4 w-4" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4" />
-                    )}
-                </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <AnimatePresence>
-                  {expandedSections.certifications ? (
+                          </motion.div>
+
+                          {/* Certification Grid */}
+                          <div className="grid gap-6 md:grid-cols-2">
+                            {careerAnalysis?.certificationPath?.map((cert, index) => (
                     <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="space-y-4"
-                    >
-                      {careerAnalysis?.certificationPath?.map((cert, index) => (
-                        <div key={index} className="p-4 rounded-lg bg-accent/50 space-y-2">
-                          <h3 className="font-medium text-primary">{cert.name}</h3>
+                                initial={{ scale: 0.95, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                transition={{ delay: index * 0.1 }}
+                                key={index}
+                                className="group relative p-6 rounded-2xl border border-accent/10 bg-gradient-to-br from-accent/10 via-background to-accent/5 backdrop-blur-xl"
+                              >
+                                <div className="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
+                                <div className="relative space-y-4">
+                                  <div className="flex items-start justify-between">
+                                    <div className="space-y-1">
+                                      <h4 className="text-lg font-medium group-hover:text-primary transition-colors duration-300">
+                                        {cert.name}
+                                      </h4>
+                                      <p className="text-sm text-muted-foreground">
+                                        {cert.provider}
+                                      </p>
+                                    </div>
+                                    <Badge variant="outline" className={cn(
+                                      "transition-colors duration-300",
+                                      cert.level === 'beginner' ? 'border-green-500/20 text-green-500' :
+                                      cert.level === 'intermediate' ? 'border-blue-500/20 text-blue-500' :
+                                      'border-purple-500/20 text-purple-500'
+                                    )}>
+                                      {cert.level}
+                                    </Badge>
+                                  </div>
+
+                                  <div className="space-y-3">
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <BookOpen className="h-4 w-4" />
-                            {cert.purpose}
+                                      <div className="p-1.5 rounded-lg bg-primary/10">
+                                        <Clock className="h-4 w-4 text-primary" />
                           </div>
-                          <div className="flex items-center gap-2 text-sm">
-                            <Clock className="h-4 w-4" />
                             {cert.timeline}
                           </div>
-                        </div>
-                      ))}
-                    </motion.div>
-                  ) : (
-                    <div className="text-center text-muted-foreground p-4">
-                      Click to view recommended certifications
-                    </div>
-                  )}
-                </AnimatePresence>
-              </CardContent>
-            </Card>
 
-            {/* Project Recommendations */}
-            <Card className="shadow-lg hover:shadow-xl transition-all duration-300">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 bg-primary/10 rounded-full">
+                                    <div className="space-y-2">
+                                      <div className="flex items-center gap-2">
+                                        <div className="p-1.5 rounded-lg bg-primary/10">
+                                          <Target className="h-4 w-4 text-primary" />
+                                        </div>
+                                        <span className="text-sm font-medium">Purpose</span>
+                                      </div>
+                                      <p className="text-sm text-muted-foreground pl-8">
+                                        {cert.purpose}
+                                      </p>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                      <div className="flex items-center gap-2">
+                                        <div className="p-1.5 rounded-lg bg-primary/10">
+                                          <ListChecks className="h-4 w-4 text-primary" />
+                                        </div>
+                                        <span className="text-sm font-medium">Prerequisites</span>
+                                      </div>
+                                      <div className="flex flex-wrap gap-2 pl-8">
+                              {cert.prerequisites.map((prereq, i) => (
+                                          <Badge
+                                            key={i}
+                                            variant="outline"
+                                            className="bg-accent/10 hover:bg-accent/20 transition-colors duration-300 text-xs"
+                                          >
+                                  {prereq}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                                  </div>
+
+                          {cert.url && (
+                            <Link 
+                              href={cert.url}
+                              target="_blank"
+                                      className={cn(
+                                        "mt-4 inline-flex items-center gap-2 text-sm",
+                                        "text-primary hover:text-primary/80",
+                                        "group-hover:translate-x-1 transition-all duration-300"
+                                      )}
+                                    >
+                                      <span>View Certification Details</span>
+                              <ExternalLink className="h-3 w-3" />
+                            </Link>
+                          )}
+                        </div>
+                    </motion.div>
+                            ))}
+                    </div>
+                        </motion.div>
+                      )}
+
+                      {/* Project Recommendations Content */}
+                      {expandedSections.projects && (
+                        <motion.div
+                          key="projects"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="space-y-8"
+                        >
+                          {/* Projects Overview */}
+                          <motion.div
+                            initial={{ y: 20, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ delay: 0.1 }}
+                            className="relative p-6 rounded-3xl bg-gradient-to-br from-primary/5 via-accent/5 to-background border border-accent/10 overflow-hidden"
+                          >
+                            <div className="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
+                            <div className="relative flex items-center justify-between">
+                              <div className="space-y-1">
+                                <h3 className="text-2xl font-semibold bg-gradient-to-br from-primary to-primary/70 bg-clip-text text-transparent">
+                                  Recommended Projects
+                                </h3>
+                                <p className="text-muted-foreground">Curated projects to showcase your skills</p>
+                              </div>
+                              <div className="p-3 rounded-2xl bg-primary/10 backdrop-blur-sm">
                       <Code className="h-6 w-6 text-primary" />
                     </div>
-                    Projects
                   </div>
-                <Button 
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => toggleSection('projects')}
-                    className="text-primary"
-                  >
-                    {expandedSections.projects ? (
-                      <ChevronUp className="h-4 w-4" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4" />
-                    )}
-                </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <AnimatePresence>
-                  {expandedSections.projects ? (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="space-y-4"
-                    >
-                      {careerAnalysis?.projectRecommendations?.map((project, index) => (
-                        <div key={index} className="p-4 rounded-lg bg-accent/50 space-y-2">
-                          <h3 className="font-medium text-primary">{project.type}</h3>
-                          <p className="text-sm text-muted-foreground">{project.domain}</p>
-                          <div className="flex flex-wrap gap-2">
-                            <Badge variant="outline" className="text-xs">{project.difficulty}</Badge>
-                          </div>
-                        </div>
-                      ))}
-                    </motion.div>
-                  ) : (
-                    <div className="text-center text-muted-foreground p-4">
-                      Click to view recommended projects
-              </div>
-                  )}
-                </AnimatePresence>
-            </CardContent>
-          </Card>
+                          </motion.div>
 
-            {/* Community Strategy */}
-            <Card className="shadow-lg hover:shadow-xl transition-all duration-300">
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="p-2 bg-primary/10 rounded-full">
+                          {/* Project Grid */}
+                          <div className="grid gap-6 md:grid-cols-2">
+                            {careerAnalysis?.projectRecommendations?.map((project, index) => (
+                    <motion.div
+                                initial={{ scale: 0.95, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                transition={{ delay: index * 0.1 }}
+                                key={index}
+                                className="group relative p-6 rounded-2xl border border-accent/10 bg-gradient-to-br from-accent/10 via-background to-accent/5 backdrop-blur-xl"
+                              >
+                                <div className="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
+                                <div className="relative space-y-4">
+                                  <div className="flex items-start justify-between">
+                                    <div className="space-y-1">
+                                      <h4 className="text-lg font-medium group-hover:text-primary transition-colors duration-300">
+                                        {project.name || 'Unnamed Project'}
+                                      </h4>
+                                      <div className="flex gap-2">
+                                        <Badge variant="outline" className="bg-accent/10 text-xs">
+                                          {project.type || 'Not specified'}
+                                        </Badge>
+                                        <Badge variant="outline" className="bg-accent/10 text-xs">
+                                          {project.domain || 'Not specified'}
+                                        </Badge>
+                          </div>
+                            </div>
+                                    <Badge variant="outline" className={cn(
+                                      "transition-colors duration-300",
+                                      project.difficulty === 'beginner' ? 'border-green-500/20 text-green-500' :
+                                      project.difficulty === 'intermediate' ? 'border-blue-500/20 text-blue-500' :
+                                      'border-purple-500/20 text-purple-500'
+                                    )}>
+                                      {project.difficulty || 'Not specified'}
+                                    </Badge>
+                          </div>
+
+                                  <div className="space-y-3">
+                                    <div className="space-y-2">
+                                      <div className="flex items-center gap-2">
+                                        <div className="p-1.5 rounded-lg bg-primary/10">
+                                          <Target className="h-4 w-4 text-primary" />
+                                        </div>
+                                        <span className="text-sm font-medium">Project Overview</span>
+                                      </div>
+                                      <p className="text-sm text-muted-foreground pl-8">
+                                        {project.description || 'No description available'}
+                          </p>
+                        </div>
+
+                                    <div className="space-y-2">
+                                      <div className="flex items-center gap-2">
+                                        <div className="p-1.5 rounded-lg bg-primary/10">
+                                          <Code className="h-4 w-4 text-primary" />
+                                        </div>
+                                        <span className="text-sm font-medium">Required Skills</span>
+                                      </div>
+                                      <div className="flex flex-wrap gap-2 pl-8">
+                                        {(project.skills || []).map((skill, i) => (
+                                          <Badge
+                                            key={i}
+                                            variant="secondary"
+                                            className="bg-primary/10 hover:bg-primary/20 text-primary text-xs transition-colors duration-300"
+                                          >
+                                            {skill || 'Unnamed Skill'}
+                                          </Badge>
+                                        ))}
+                                        {(!project.skills || project.skills.length === 0) && (
+                                          <Badge variant="secondary" className="text-xs">
+                                            No skills specified
+                                          </Badge>
+                                        )}
+                                      </div>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                      <div className="flex items-center gap-2">
+                                        <div className="p-1.5 rounded-lg bg-primary/10">
+                                          <Sparkles className="h-4 w-4 text-primary" />
+                                        </div>
+                                        <span className="text-sm font-medium">Business Impact</span>
+                                      </div>
+                                      <p className="text-sm text-muted-foreground pl-8">
+                                        {project.businessImpact || 'No business impact specified'}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </div>
+                    </motion.div>
+                            ))}
+              </div>
+                        </motion.div>
+                      )}
+
+                      {/* Community Content */}
+                      {expandedSections.community && (
+                        <motion.div
+                          key="community"
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="space-y-8"
+                        >
+                          {/* Community Overview */}
+                          <motion.div
+                            initial={{ y: 20, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            transition={{ delay: 0.1 }}
+                            className="relative p-6 rounded-3xl bg-gradient-to-br from-primary/5 via-accent/5 to-background border border-accent/10 overflow-hidden"
+                          >
+                            <div className="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
+                            <div className="relative flex items-center justify-between">
+                              <div className="space-y-1">
+                                <h3 className="text-2xl font-semibold bg-gradient-to-br from-primary to-primary/70 bg-clip-text text-transparent">
+                                  Community Engagement
+                                </h3>
+                                <p className="text-muted-foreground">Connect, contribute, and grow with the community</p>
+                              </div>
+                              <div className="p-3 rounded-2xl bg-primary/10 backdrop-blur-sm">
                       <Users className="h-6 w-6 text-primary" />
                     </div>
-                    Community
                   </div>
-          <Button 
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => toggleSection('community')}
-                    className="text-primary"
-                  >
-                    {expandedSections.community ? (
-                      <ChevronUp className="h-4 w-4" />
-                    ) : (
-                      <ChevronDown className="h-4 w-4" />
-                    )}
-          </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <AnimatePresence>
-                  {expandedSections.community ? (
+                          </motion.div>
+
+                          <div className="grid gap-6 md:grid-cols-2">
+                            {/* Networking Platforms */}
                     <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="space-y-6"
-                    >
-                      <div className="space-y-2">
-                        <h3 className="font-medium text-primary">Key Platforms</h3>
-                        <div className="flex flex-wrap gap-2">
+                              initial={{ scale: 0.95, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              transition={{ delay: 0.1 }}
+                              className="group relative p-6 rounded-2xl border border-accent/10 bg-gradient-to-br from-accent/10 via-background to-accent/5 backdrop-blur-xl"
+                            >
+                              <div className="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
+                              <div className="relative space-y-4">
+                                <div className="flex items-center gap-3">
+                                  <div className="p-2 rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors duration-300">
+                                    <Users className="h-5 w-5 text-primary" />
+                                  </div>
+                                  <h4 className="text-lg font-medium">Key Platforms</h4>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2 pl-12">
                           {careerAnalysis?.communityStrategy?.networkingTargets?.map((platform, index) => (
-                            <Badge key={index} variant="secondary">{platform}</Badge>
+                                    <motion.div
+                                      key={index}
+                                      initial={{ x: -10, opacity: 0 }}
+                                      animate={{ x: 0, opacity: 1 }}
+                                      transition={{ delay: index * 0.1 }}
+                                      className="flex items-center gap-2 p-2 rounded-lg bg-accent/10 hover:bg-accent/20 transition-colors duration-300"
+                                    >
+                                      <div className="p-1 rounded-lg bg-primary/10">
+                                        <Users className="h-4 w-4 text-primary" />
+                                      </div>
+                                      <span className="text-sm">{platform}</span>
+                                    </motion.div>
                           ))}
                         </div>
                       </div>
+                            </motion.div>
 
-                      <div className="space-y-2">
-                        <h3 className="font-medium text-primary">Contribution Opportunities</h3>
-                        <div className="flex flex-wrap gap-2">
+                            {/* Contribution Opportunities */}
+                            <motion.div
+                              initial={{ scale: 0.95, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              transition={{ delay: 0.2 }}
+                              className="group relative p-6 rounded-2xl border border-accent/10 bg-gradient-to-br from-accent/10 via-background to-accent/5 backdrop-blur-xl"
+                            >
+                              <div className="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
+                              <div className="relative space-y-4">
+                                <div className="flex items-center gap-3">
+                                  <div className="p-2 rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors duration-300">
+                                    <Target className="h-5 w-5 text-primary" />
+                                  </div>
+                                  <h4 className="text-lg font-medium">Contribution Opportunities</h4>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2 pl-12">
                           {careerAnalysis?.communityStrategy?.contributionOpportunities?.map((opp, index) => (
-                            <Badge key={index} variant="outline">{opp}</Badge>
+                                    <motion.div
+                                      key={index}
+                                      initial={{ x: -10, opacity: 0 }}
+                                      animate={{ x: 0, opacity: 1 }}
+                                      transition={{ delay: index * 0.1 }}
+                                      className="flex items-center gap-2 p-2 rounded-lg bg-accent/10 hover:bg-accent/20 transition-colors duration-300"
+                                    >
+                                      <div className="p-1 rounded-lg bg-primary/10">
+                                        <Target className="h-4 w-4 text-primary" />
+                                      </div>
+                                      <span className="text-sm">{opp}</span>
+                                    </motion.div>
                           ))}
                         </div>
                       </div>
+                            </motion.div>
 
-                      <div className="space-y-2">
-                        <h3 className="font-medium text-primary">Mentorship</h3>
-                        <div className="space-y-2">
+                            {/* Mentorship Opportunities */}
+                            <motion.div
+                              initial={{ scale: 0.95, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              transition={{ delay: 0.3 }}
+                              className="md:col-span-2 group relative p-6 rounded-2xl border border-accent/10 bg-gradient-to-br from-accent/10 via-background to-accent/5 backdrop-blur-xl"
+                            >
+                              <div className="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
+                              <div className="relative space-y-4">
+                                <div className="flex items-center gap-3">
+                                  <div className="p-2 rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors duration-300">
+                                    <Users className="h-5 w-5 text-primary" />
+                                  </div>
+                                  <h4 className="text-lg font-medium">Mentorship Journey</h4>
+                                </div>
+                                <div className="grid md:grid-cols-2 gap-4 pl-12">
                           {careerAnalysis?.communityStrategy?.mentorshipRecommendations?.map((rec, index) => (
-                            <div key={index} className="flex items-start gap-2 text-sm">
-                              <CheckCircle className="h-4 w-4 text-green-500 mt-1" />
-                              <span>{rec}</span>
+                                    <motion.div
+                                      key={index}
+                                      initial={{ x: -10, opacity: 0 }}
+                                      animate={{ x: 0, opacity: 1 }}
+                                      transition={{ delay: index * 0.1 }}
+                                      className="relative flex items-start gap-3 p-4 rounded-xl bg-accent/10 hover:bg-accent/20 transition-all duration-300 group/item"
+                                    >
+                                      <div className="absolute left-0 top-0 bottom-0 w-1 rounded-full bg-gradient-to-b from-transparent via-primary/20 to-transparent" />
+                                      <div className="p-1.5 rounded-lg bg-green-500/10 group-hover/item:bg-green-500/20 transition-colors duration-300">
+                                        <CheckCircle className="h-4 w-4 text-green-500" />
                             </div>
+                                      <div className="space-y-1">
+                                        <span className="text-sm text-muted-foreground group-hover/item:text-foreground transition-colors duration-300">
+                                          {rec}
+                                        </span>
+                                      </div>
+                                    </motion.div>
                           ))}
                         </div>
                       </div>
                     </motion.div>
-                  ) : (
-                    <div className="text-center text-muted-foreground p-4">
-                      Click to view community engagement opportunities
                     </div>
+                        </motion.div>
                   )}
                 </AnimatePresence>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>

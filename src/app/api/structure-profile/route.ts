@@ -54,6 +54,7 @@ interface Certification {
     purpose: string;
     timeline: string;
     prerequisites: string[];
+    url: string;
     provider: string;
     level: string;
 }
@@ -110,9 +111,9 @@ export async function POST(request: NextRequest) {
         const recentAnalysis = await prisma.careerAnalysis.findFirst({
             where: {
                 userId,
-                createdAt: {
-                    gte: new Date(Date.now() - 24 * 60 * 60 * 1000)
-                }
+                // createdAt: {
+                //     gte: new Date(Date.now() - 24 * 60 * 60 * 1000)
+                // }
             },
             orderBy: {
                 createdAt: 'desc'
@@ -142,7 +143,7 @@ export async function POST(request: NextRequest) {
 
         // Create the analysis
         const prompt = `
-        Analyze my career profile through the lens of AI industry trends and provide a structured development plan to future-proof my career. Consider emerging technologies, skill demand forecasts, and adjacent domain opportunities.
+        Analyze my career profile through the lens of AI industry trends and current job market in my industry and my target job description and provide a structured development plan to future-proof my career. Consider emerging technologies, skill demand forecasts, and adjacent domain opportunities.
         
         Current Profile:
         - Current Role: ${currentRole}
@@ -173,6 +174,32 @@ export async function POST(request: NextRequest) {
                 "future-readiness": 0-100,
                 "network-strength": 0-100
             },
+            "skillsAnalysis": {
+                "currentSkills": [
+                    {
+                        "name": "skill name",
+                        "category": "technical/domain/soft/future",
+                        "proficiency": "beginner/intermediate/advanced",
+                        "relevance": "high/medium/low",
+                        "status": "active/growing/needs-update"
+                    }
+                ],
+                "recommendedSkills": [
+                    {
+                        "name": "skill name",
+                        "category": "technical/domain/soft/future",
+                        "priority": "high/medium/low",
+                        "timeToAcquire": "1-3 months/3-6 months/6+ months",
+                        "relevance": "current-market/emerging-trend/future-requirement"
+                    }
+                ],
+                "skillCategories": {
+                    "technical": ["list of technical skills"],
+                    "domain": ["list of domain-specific skills"],
+                    "soft": ["list of soft skills"],
+                    "future": ["list of future-ready skills"]
+                }
+            },
             "aiRoadmap": [
                 {
                     "category": "Core Technical Skills/Applied AI/Strategic AI/Network Building",
@@ -180,9 +207,16 @@ export async function POST(request: NextRequest) {
                         {
                             "title": "task title aligned with AI trends",
                             "description": "actionable steps with success metrics",
-                            "urgency": "immediate (0-6mo)/near-term (6-12mo)/future (12-24mo)",
+                            "urgency": "immediate (0-1mo)/near-term (1-3mo)/future (3-6mo) etc",
                             "priority": "critical/high/medium",
                             "skillType": "hard skill/soft skill/industry knowledge",
+                            "skillsGained": [
+                                {
+                                    "name": "skill name",
+                                    "category": "technical/domain/soft/future",
+                                    "level": "beginner/intermediate/advanced"
+                                }
+                            ],
                             "resources": [
                                 {
                                     "name": "resource name",
@@ -210,15 +244,21 @@ export async function POST(request: NextRequest) {
                     "name": "certification name",
                     "purpose": "career stage alignment",
                     "timeline": "recommended completion date",
-                    "prerequisites": ["required skills/knowledge"]
+                    "prerequisites": ["required skills/knowledge"],
+                    "provider": "AWS/Azure/Google Cloud/DeepLearning.AI etc.",
+                    "level": "beginner/intermediate/advanced",
+                    "url": "certification URL"
                 }
             ],
             "projectRecommendations": [
                 {
+                    "name": "project name",
+                    "description": "detailed project description",
+                    "skills": ["required skill 1", "required skill 2"],
+                    "difficulty": "beginner/intermediate/expert",
                     "type": "portfolio/showcase/research/OSS contribution",
                     "domain": "computer vision/NLP/generative AI etc.",
-                    "complexity": "beginner/intermediate/expert",
-                    "businessImpact": "potential use cases"
+                    "businessImpact": "potential use cases and business value"
                 }
             ],
             "communityStrategy": {
@@ -232,18 +272,15 @@ export async function POST(request: NextRequest) {
                 "marketCompetition": "job market analysis"
             }
         }`;
-
+        console.log('ai call')
         const completion = await openai.chat.completions.create({
             messages: [
                 { 
                     role: "system", 
                     content: `You are a career advisor specializing in artificial intelligence. 
-                    Your role is to provide structured JSON responses with specific, 
-                    actionable career development plans to help users adapt to the rapidly evolving AI job market. 
-                    Each task should include an array of learning resources (articles, courses, videos, etc.) to help the user complete the task. 
-                    Additionally, provide an analysis of current and emerging AI trends, and how the user can align their skills and career goals 
-                    with these trends. Always ensure the "resources" field is an array, even if empty [].
-                    provide at least 10 tasks and make sure they are aligned with the user's dream job and skills and can done in the shortest time possible`
+            Your response MUST contain exactly 10 tasks in the "aiRoadmap" array 2 or more  resources per task and 2 or more certifications per task. 
+            If fewer than 10 tasks seem relevant, infer reasonable ones to complete the list. 
+            Do NOT reduce the number of tasks. `
                 },
                 { 
                     role: "user", 
@@ -251,10 +288,13 @@ export async function POST(request: NextRequest) {
                 }
             ],
             model: "gpt-4-turbo-preview",
-            response_format: { type: "json_object" }
+            response_format: { type: "json_object" },
+            max_tokens: 4096,
+            temperature: 0.5,
         }, {
-            timeout: 60000, // 60 second timeout
-            maxRetries: 3
+            timeout: 120000, // 120 second timeout
+            maxRetries: 3,
+            stream: true
         }).catch(error => {
             console.error('OpenAI API Error:', error);
             if (error.code === 'ETIMEDOUT' || error.code === 'ECONNABORTED') {
@@ -271,6 +311,16 @@ export async function POST(request: NextRequest) {
                     "domain-adaptation": 0,
                     "future-readiness": 0,
                     "network-strength": 0
+                },
+                skillsAnalysis: {
+                    currentSkills: [],
+                    recommendedSkills: [],
+                    skillCategories: {
+                        technical: [],
+                        domain: [],
+                        soft: [],
+                        future: []
+                    }
                 },
                 aiRoadmap: [],
                 trendAnalysis: {
@@ -295,7 +345,7 @@ export async function POST(request: NextRequest) {
         }
 
         const response = JSON.parse(completion.choices[0].message.content);
-        console.log('Gpt Response:', response);
+        console.log('ai response is ready');
 
         // Calculate the total progress from the OpenAI response
         const progressPercentage = response.progressPercentage as ProgressPercentage;
@@ -326,6 +376,11 @@ export async function POST(request: NextRequest) {
                     "network-strength": response.progressPercentage["network-strength"]
                 },
                 totalProgress: response.totalProgress,
+                skillsAnalysis: {
+                    currentSkills: response.skillsAnalysis.currentSkills,
+                    recommendedSkills: response.skillsAnalysis.recommendedSkills,
+                    skillCategories: response.skillsAnalysis.skillCategories
+                },
                 aiRoadmap: response.aiRoadmap.map((category: Category) => ({
                     category: category.category,
                     tasks: category.tasks.map((task: Task) => ({
@@ -334,6 +389,7 @@ export async function POST(request: NextRequest) {
                         urgency: task.urgency,
                         priority: task.priority,
                         skillType: task.skillType,
+                        skillsGained: task.skillsGained || [],
                         resources: task.resources || [],
                         successMetrics: task.successMetrics || []
                     }))
@@ -350,7 +406,8 @@ export async function POST(request: NextRequest) {
                     timeline: cert.timeline,
                     prerequisites: cert.prerequisites || [],
                     provider: cert.provider || 'General',
-                    level: cert.level || 'Beginner'
+                    level: cert.level || 'Beginner',
+                    url: cert.url || ''
                 })),
                 projectRecommendations: response.projectRecommendations.map((project: ProjectRecommendation) => ({
                     name: project.name || 'Unnamed Project',
@@ -407,7 +464,9 @@ export async function POST(request: NextRequest) {
                 }
             }
         });
-
+        console.log('ai response is saved');
+        console.log('token used', completion.usage?.total_tokens);
+        console.log('ai generated',response.aiRoadmap.length, 'steps');
         return NextResponse.json(response);
     } catch (error: unknown) {
         console.error('Error in career analysis:', error);
@@ -421,6 +480,16 @@ export async function POST(request: NextRequest) {
                 "network-strength": 0
             },
             totalProgress: 0,
+            skillsAnalysis: {
+                currentSkills: [],
+                recommendedSkills: [],
+                skillCategories: {
+                    technical: [],
+                    domain: [],
+                    soft: [],
+                    future: []
+                }
+            },
             aiRoadmap: [],
             trendAnalysis: {
                 emergingTechnologies: [],

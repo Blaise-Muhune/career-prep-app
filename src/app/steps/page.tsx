@@ -79,6 +79,9 @@ interface CareerAnalysis {
     purpose: string;
     timeline: string;
     prerequisites: string[];
+    url: string;
+    level: string;
+    provider: string;
   }>;
   projectRecommendations: Array<{
     type: string;

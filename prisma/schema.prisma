@@ -97,6 +97,7 @@ model CareerAnalysis {
   updatedAt DateTime @updatedAt
   progressPercentage Json
   totalProgress Float
+  skillsAnalysis Json
   aiRoadmap Json[]
   trendAnalysis Json
   certificationPath Json[]

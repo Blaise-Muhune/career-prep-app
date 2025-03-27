@@ -23,7 +23,13 @@ function AuthPage(): JSX.Element {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        router.push('/dashboard');
+        if (user.metadata.creationTime === user.metadata.lastSignInTime) {
+          console.log('new user')
+          router.push('/');
+        } else {
+          console.log('old user')
+          router.push('/dashboard');
+        }
       }
       setIsLoading(false);
     });
