@@ -1,6 +1,5 @@
-import { prisma } from '../../../config/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { Step, StepProgress } from '@prisma/client';
+import { getDocumentsByField, Step, StepProgress, CareerAnalysis } from '../../../lib/firestore';
 
 export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
@@ -12,28 +11,22 @@ export async function GET(request: NextRequest) {
 
     try {
         // Get the most recent career analysis first
-        const recentAnalysis = await prisma.careerAnalysis.findFirst({
-            where: { userId },
-            orderBy: { createdAt: 'desc' },
-            include: {
-                steps: true
-            }
-        });
-
-        // If no analysis exists, return empty array
-        if (!recentAnalysis) {
+        const analyses = await getDocumentsByField<CareerAnalysis>('careerAnalyses', 'userId', userId);
+        
+        if (analyses.length === 0) {
             return NextResponse.json([]);
         }
 
+        // Sort by creation date and get the most recent
+        const recentAnalysis = analyses.sort((a, b) => 
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )[0];
+
+        // Get steps for this analysis
+        const steps = await getDocumentsByField<Step>('steps', 'analysisId', recentAnalysis.id);
+
         // Get progress for all steps
-        const stepProgress = await prisma.stepProgress.findMany({
-            where: {
-                userId,
-                stepId: {
-                    in: recentAnalysis.steps.map((step: Step) => step.id)
-                }
-            }
-        });
+        const stepProgress = await getDocumentsByField<StepProgress>('stepProgress', 'userId', userId);
 
         // Create a map of step progress by step ID
         const progressMap = new Map(
@@ -41,7 +34,7 @@ export async function GET(request: NextRequest) {
         );
 
         // Combine steps with their progress
-        const stepsWithProgress = recentAnalysis.steps.map((step: Step) => ({
+        const stepsWithProgress = steps.map((step: Step) => ({
             ...step,
             progress: progressMap.get(step.id) || {
                 status: "NOT_STARTED",

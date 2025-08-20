@@ -1,5 +1,5 @@
-import { prisma } from '../../../config/prisma';
 import { NextRequest, NextResponse } from 'next/server';
+import { getDocumentsByField, Subscription } from '../../../lib/firestore';
 
 export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
@@ -10,17 +10,8 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-        const subscription = await prisma.subscription.findUnique({
-            where: { userId },
-            select: {
-                status: true,
-                plan: true,
-                currentPeriodEnd: true,
-                cancelAtPeriodEnd: true,
-                canceledAt: true,
-                active: true
-            }
-        });
+        const subscriptions = await getDocumentsByField<Subscription>('subscriptions', 'userId', userId);
+        const subscription = subscriptions.length > 0 ? subscriptions[0] : null;
 
         if (!subscription) {
             // Return a default response for users without a subscription
@@ -33,7 +24,14 @@ export async function GET(request: NextRequest) {
             });
         }
 
-        return NextResponse.json(subscription);
+        return NextResponse.json({
+            status: subscription.status,
+            plan: subscription.plan,
+            currentPeriodEnd: subscription.currentPeriodEnd,
+            cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
+            canceledAt: subscription.canceledAt,
+            active: subscription.active
+        });
     } catch (error: unknown) {
         console.error('Error fetching subscription:', error);
         return NextResponse.json({ 

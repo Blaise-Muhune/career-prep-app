@@ -1,5 +1,5 @@
-import { prisma } from '../../../config/prisma';
 import { NextRequest, NextResponse } from 'next/server';
+import { getDocumentsByField, CareerAnalysis, Step } from '../../../lib/firestore';
 
 export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
@@ -10,17 +10,25 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-        const analyses = await prisma.careerAnalysis.findMany({
-            where: { userId },
-            include: {
-                steps: true
-            },
-            orderBy: {
-                createdAt: 'desc'
-            }
-        });
+        const analyses = await getDocumentsByField<CareerAnalysis>('careerAnalyses', 'userId', userId);
+        
+        // Get steps for each analysis
+        const analysesWithSteps = await Promise.all(
+            analyses.map(async (analysis) => {
+                const steps = await getDocumentsByField<Step>('steps', 'analysisId', analysis.id);
+                return {
+                    ...analysis,
+                    steps
+                };
+            })
+        );
 
-        return NextResponse.json(analyses);
+        // Sort by creation date (newest first)
+        const sortedAnalyses = analysesWithSteps.sort((a, b) => 
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+
+        return NextResponse.json(sortedAnalyses);
     } catch (error: unknown) {
         console.error('Error fetching career analyses:', error);
         return NextResponse.json({
@@ -40,33 +48,36 @@ export async function POST(request: NextRequest) {
         }
 
         // Get the most recent analysis
-        const recentAnalysis = await prisma.careerAnalysis.findFirst({
-            where: {
-                userId,
-                createdAt: {
-                    gte: new Date(Date.now() - 24 * 60 * 60 * 1000) // Last 24 hours
-                }
-            },
-            include: {
-                steps: true
-            },
-            orderBy: {
-                createdAt: 'desc'
-            }
-        });
-
-        if (recentAnalysis) {
-            return NextResponse.json({
-                ...JSON.parse(recentAnalysis.analysis),
-                steps: recentAnalysis.steps
-            });
+        const recentAnalyses = await getDocumentsByField<CareerAnalysis>('careerAnalyses', 'userId', userId);
+        
+        if (recentAnalyses.length === 0) {
+            return NextResponse.json({ 
+                error: 'No career analysis found',
+                message: 'Please use the structure-profile endpoint to generate a new analysis'
+            }, { status: 404 });
         }
 
-        // If no recent analysis, return 404
-        return NextResponse.json({ 
-            error: 'No recent career analysis found',
-            message: 'Please use the structure-profile endpoint to generate a new analysis'
-        }, { status: 404 });
+        // Sort by creation date and get the most recent
+        const recentAnalysis = recentAnalyses.sort((a, b) => 
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )[0];
+
+        // Check if it's from the last 24 hours
+        const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        if (recentAnalysis.createdAt < twentyFourHoursAgo) {
+            return NextResponse.json({ 
+                error: 'No recent career analysis found',
+                message: 'Please use the structure-profile endpoint to generate a new analysis'
+            }, { status: 404 });
+        }
+
+        // Get steps for this analysis
+        const steps = await getDocumentsByField<Step>('steps', 'analysisId', recentAnalysis.id);
+
+        return NextResponse.json({
+            ...JSON.parse(recentAnalysis.analysis),
+            steps
+        });
     } catch (error: unknown) {
         console.error('Error in career analysis:', error);
         return NextResponse.json({ 

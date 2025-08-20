@@ -119,7 +119,7 @@ export default function StepsPage() {
         }
 
         // Fetch career analysis for progress data
-        const analysisResponse = await axios.post(`/api/career-analysis`, {
+        const analysisResponse = await axios.post(`/api/structure-profile`, {
           userId: user.uid
         }, {
           withCredentials: true

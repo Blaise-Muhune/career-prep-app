@@ -1,5 +1,5 @@
-import { prisma } from '../../../../config/prisma';
 import { NextRequest, NextResponse } from 'next/server';
+import { updateDocument, getDocument, User } from '../../../../lib/firestore';
 
 type RouteContext = {
     params: Promise<{
@@ -20,12 +20,15 @@ export async function PUT(
             return NextResponse.json({ error: 'Preferences are required' }, { status: 400 });
         }
 
-        const updatedUser = await prisma.user.update({
-            where: { id: userId },
-            data: {
-                preferences
-            }
-        });
+        // Update user preferences
+        await updateDocument<User>('users', userId, { preferences });
+
+        // Get the updated user to return
+        const updatedUser = await getDocument<User>('users', userId);
+        
+        if (!updatedUser) {
+            return NextResponse.json({ error: 'User not found' }, { status: 404 });
+        }
 
         return NextResponse.json(updatedUser);
     } catch (error: unknown) {

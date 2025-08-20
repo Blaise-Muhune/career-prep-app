@@ -1,7 +1,15 @@
-import { prisma } from '../../../config/prisma';
 import { openai } from '../../../config/openai';
 import { NextRequest, NextResponse } from 'next/server';
-import { Skill } from '@prisma/client';
+import { 
+  getDocument, 
+  getDocumentsByField, 
+  createDocument, 
+  User, 
+  Profile, 
+  CareerAnalysis, 
+  Step, 
+  Resource as FirestoreResource
+} from '../../../lib/firestore';
 
 interface StructuredData {
     jobDescription?: string;
@@ -79,49 +87,21 @@ export async function POST(request: NextRequest) {
         }
 
         // Get user data with proper null checks
-        const userData = await prisma.user.findUnique({
-            where: { id: userId },
-            include: {
-                profile: {
-                    include: {
-                        skills: true
-                    }
-                },
-                tasks: true,
-                stepProgress: true,
-                careerAnalyses: {
-                    include: {
-                        steps: true
-                    },
-                    orderBy: {
-                        createdAt: 'desc'
-                    },
-                    take: 1
-                }
-            }
-        });
-
-        console.log('Found user data:', userData ? 'yes' : 'no', userData?.id);
-
+        const userData = await getDocument<User>('users', userId);
+        
         if (!userData) {
             return NextResponse.json({ error: 'User not found' }, { status: 404 });
         }
 
+        // Get user profile
+        const profiles = await getDocumentsByField<Profile>('profiles', 'userId', userId);
+        const profile = profiles.length > 0 ? profiles[0] : null;
+
+
+
         // Check for recent analysis first
-        const recentAnalysis = await prisma.careerAnalysis.findFirst({
-            where: {
-                userId,
-                // createdAt: {
-                //     gte: new Date(Date.now() - 24 * 60 * 60 * 1000)
-                // }
-            },
-            orderBy: {
-                createdAt: 'desc'
-            },
-            include: {
-                steps: true
-            }
-        });
+        const recentAnalyses = await getDocumentsByField<CareerAnalysis>('careerAnalyses', 'userId', userId);
+        const recentAnalysis = recentAnalyses.length > 0 ? recentAnalyses[0] : null;
 
         if (recentAnalysis) {
             // Return the stored analysis with its progress data
@@ -129,10 +109,10 @@ export async function POST(request: NextRequest) {
             return NextResponse.json(storedAnalysis);
         }
 
-        const bio = userData.profile?.bio || 'Not provided';
-        const dreamJob = userData.profile?.dreamJob || 'Not specified';
-        const skills = userData.profile?.skills?.map((s: Skill) => s.name).join(', ') || 'None listed';
-        const structuredData = userData.profile?.structuredData as StructuredData || {};
+        const bio = profile?.bio || 'Not provided';
+        const dreamJob = profile?.dreamJob || 'Not specified';
+        const skills = profile?.skills?.map(s => s.name).join(', ') || 'None listed';
+        const structuredData = profile?.structuredData as StructuredData || {};
         const jobDescription = structuredData.jobDescription || 'Not provided';
         const currentRole = structuredData.currentRole || 'Not specified';
         const yearsOfExperience = structuredData.yearsOfExperience || 'Not specified';
@@ -365,104 +345,122 @@ export async function POST(request: NextRequest) {
         }
 
         // Save the analysis
-        await prisma.careerAnalysis.create({
-            data: {
-                userId,
-                analysis: JSON.stringify(response),
-                progressPercentage: {
-                    "technical-proficiency": response.progressPercentage["technical-proficiency"],
-                    "domain-adaptation": response.progressPercentage["domain-adaptation"],
-                    "future-readiness": response.progressPercentage["future-readiness"],
-                    "network-strength": response.progressPercentage["network-strength"]
-                },
-                totalProgress: response.totalProgress,
-                skillsAnalysis: {
-                    currentSkills: response.skillsAnalysis.currentSkills,
-                    recommendedSkills: response.skillsAnalysis.recommendedSkills,
-                    skillCategories: response.skillsAnalysis.skillCategories
-                },
-                aiRoadmap: response.aiRoadmap.map((category: Category) => ({
-                    category: category.category,
-                    tasks: category.tasks.map((task: Task) => ({
-                        title: task.title,
-                        description: task.description,
-                        urgency: task.urgency,
-                        priority: task.priority,
-                        skillType: task.skillType,
-                        resources: task.resources || [],
-                        successMetrics: task.successMetrics || []
-                    }))
-                })),
-                trendAnalysis: {
-                    emergingTechnologies: response.trendAnalysis.emergingTechnologies || [],
-                    atRiskSkills: response.trendAnalysis.atRiskSkills || [],
-                    crossTraining: response.trendAnalysis.crossTraining || [],
-                    industryOpportunities: response.trendAnalysis.industryOpportunities || []
-                },
-                certificationPath: response.certificationPath.map((cert: Certification) => ({
-                    name: cert.name,
-                    purpose: cert.purpose,
-                    timeline: cert.timeline,
-                    prerequisites: cert.prerequisites || [],
-                    provider: cert.provider || 'General',
-                    level: cert.level || 'Beginner',
-                    url: cert.url || ''
-                })),
-                projectRecommendations: response.projectRecommendations.map((project: ProjectRecommendation) => ({
-                    name: project.name || 'Unnamed Project',
-                    description: project.description || '',
-                    skills: project.skills || [],
-                    difficulty: project.difficulty || 'beginner',
-                    type: project.type || 'portfolio',
-                    domain: project.domain || 'general',
-                    businessImpact: project.businessImpact || ''
-                })),
-                communityStrategy: {
-                    networkingTargets: response.communityStrategy.networkingTargets || [],
-                    contributionOpportunities: response.communityStrategy.contributionOpportunities || [],
-                    mentorshipRecommendations: response.communityStrategy.mentorshipRecommendations || [],
-                    platforms: response.communityStrategy.platforms || [],
-                    focusAreas: response.communityStrategy.focusAreas || [],
-                    engagementTips: response.communityStrategy.engagementTips || []
-                },
-                riskAssessment: {
-                    level: response.riskAssessment.automationThreat || 'low',
-                    factors: response.riskAssessment.skillDecay ? [response.riskAssessment.skillDecay] : [],
-                    mitigationSteps: response.riskAssessment.marketCompetition ? [response.riskAssessment.marketCompetition] : []
-                },
-                steps: {
-                    create: response.aiRoadmap.flatMap((category: Category) => 
-                        category.tasks.map((task: Task) => ({
-                            title: task.title,
-                            description: task.description,
-                            timeframe: task.urgency || 'not specified',
-                            priority: task.priority === 'critical' ? 'high' : task.priority || 'medium',
-                            status: "NOT_STARTED",
-                            timelineProgress: 0,
-                            skillType: task.skillType || 'technical',
-                            category: category.category,
-                            successMetrics: task.successMetrics || [],
-                            resources: {
-                                create: (task.resources || []).map((resource: Resource) => ({
-                                    name: resource.name || '',
-                                    url: resource.url || '',
-                                    description: resource.description || '',
-                                    type: resource.type || 'article',
-                                    provider: resource.provider || 'General',
-                                    level: resource.level || 'beginner',
-                                    aiRelevance: resource.aiRelevance || 'foundational',
-                                    timeCommitment: resource.timeCommitment || '1-2 hours',
-                                    category: resource.provider || 'General',
-                                    tags: resource.aiRelevance || '',
-                                    isFree: true,
-                                    isPremium: false
-                                }))
-                            }
-                        }))
-                    )
-                }
-            }
+        const analysisId = await createDocument<CareerAnalysis>('careerAnalyses', {
+            userId,
+            analysis: JSON.stringify(response),
+            progressPercentage: {
+                "technical-proficiency": response.progressPercentage["technical-proficiency"],
+                "domain-adaptation": response.progressPercentage["domain-adaptation"],
+                "future-readiness": response.progressPercentage["future-readiness"],
+                "network-strength": response.progressPercentage["network-strength"]
+            },
+            totalProgress: response.totalProgress,
+            skillsAnalysis: {
+                currentSkills: response.skillsAnalysis.currentSkills,
+                recommendedSkills: response.skillsAnalysis.recommendedSkills,
+                skillCategories: response.skillsAnalysis.skillCategories
+            },
+            aiRoadmap: response.aiRoadmap.map((category: Category) => ({
+                category: category.category,
+                tasks: category.tasks.map((task: Task) => ({
+                    title: task.title,
+                    description: task.description,
+                    urgency: task.urgency,
+                    priority: task.priority,
+                    skillType: task.skillType,
+                    resources: task.resources || [],
+                    successMetrics: task.successMetrics || []
+                }))
+            })),
+            trendAnalysis: {
+                emergingTechnologies: response.trendAnalysis.emergingTechnologies || [],
+                atRiskSkills: response.trendAnalysis.atRiskSkills || [],
+                crossTraining: response.trendAnalysis.crossTraining || [],
+                industryOpportunities: response.trendAnalysis.industryOpportunities || []
+            },
+            certificationPath: response.certificationPath.map((cert: Certification) => ({
+                name: cert.name,
+                purpose: cert.purpose,
+                timeline: cert.timeline,
+                prerequisites: cert.prerequisites || [],
+                provider: cert.provider || 'General',
+                level: cert.level || 'Beginner',
+                url: cert.url || ''
+            })),
+            projectRecommendations: response.projectRecommendations.map((project: ProjectRecommendation) => ({
+                name: project.name || 'Unnamed Project',
+                description: project.description || '',
+                skills: project.skills || [],
+                difficulty: project.difficulty || 'beginner',
+                type: project.type || 'portfolio',
+                domain: project.domain || 'general',
+                businessImpact: project.businessImpact || ''
+            })),
+            communityStrategy: {
+                networkingTargets: response.communityStrategy.networkingTargets || [],
+                contributionOpportunities: response.communityStrategy.contributionOpportunities || [],
+                mentorshipRecommendations: response.communityStrategy.mentorshipRecommendations || [],
+                platforms: response.communityStrategy.platforms || [],
+                focusAreas: response.communityStrategy.focusAreas || [],
+                engagementTips: response.communityStrategy.engagementTips || []
+            },
+            riskAssessment: {
+                level: response.riskAssessment.automationThreat || 'low',
+                factors: response.riskAssessment.factors || [],
+                mitigationSteps: response.riskAssessment.mitigationSteps || [],
+                automationThreat: response.riskAssessment.automationThreat || 'low',
+                skillDecay: response.riskAssessment.skillDecay || 'none',
+                marketCompetition: response.riskAssessment.marketCompetition || 'unknown'
+            },
+            createdAt: new Date(),
+            updatedAt: new Date()
         });
+
+        // Create steps
+        const stepPromises = response.aiRoadmap.flatMap((category: Category) => 
+            category.tasks.map(async (task: Task) => {
+                const stepId = await createDocument<Step>('steps', {
+                    title: task.title,
+                    description: task.description,
+                    timeframe: task.urgency || 'not specified',
+                    priority: task.priority === 'critical' ? 'high' : task.priority || 'medium',
+                    status: "NOT_STARTED",
+                    timelineProgress: 0,
+                    skillType: task.skillType || 'technical',
+                    category: category.category,
+                    successMetrics: task.successMetrics || [],
+                    analysisId,
+                    resources: []
+                });
+
+                // Create resources for this step
+                if (task.resources && task.resources.length > 0) {
+                    const resourcePromises = task.resources.map(async (resource: Resource) => {
+                        await createDocument<FirestoreResource>('resources', {
+                            name: resource.name || '',
+                            url: resource.url || '',
+                            description: resource.description || '',
+                            type: resource.type || 'article',
+                            provider: resource.provider || 'General',
+                            level: resource.level || 'beginner',
+                            aiRelevance: resource.aiRelevance || 'foundational',
+                            timeCommitment: resource.timeCommitment || '1-2 hours',
+                            category: resource.provider || 'General',
+                            tags: resource.aiRelevance || '',
+                            isFree: true,
+                            isPremium: false,
+                            stepId
+                        });
+                    });
+                    await Promise.all(resourcePromises);
+                }
+
+                return stepId;
+            })
+        );
+
+        await Promise.all(stepPromises);
+
         console.log('ai response is saved');
         console.log('token used', completion.usage?.total_tokens);
         console.log('ai generated',response.aiRoadmap.length, 'steps');

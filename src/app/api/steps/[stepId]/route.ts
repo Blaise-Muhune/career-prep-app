@@ -1,34 +1,23 @@
-import { Task } from '@prisma/client';
-import { prisma } from '../../../../config/prisma';
 import { NextRequest, NextResponse } from 'next/server';
+import { 
+    getDocument, 
+    getDocumentsByField, 
+    updateDocument, 
+    createDocument,
+    Step, 
+    StepProgress, 
+    CareerAnalysis,
+    Resource
+} from '../../../../lib/firestore';
 
 interface Category {
     category: string;
-    tasks: Task[];
-}
-
-interface Resource {
-    id: number;
-    name: string;
-    url: string | null;
-    description: string;
-    type: string;
-    category: string;
-    tags: string;
-    isFree: boolean;
-    isPremium: boolean;
-    stepId: number;
-    provider: string | null;
-    level: string | null;
-    aiRelevance: string | null;
-    timeCommitment: string | null;
-}
-
-interface StepResource extends Resource {
-    provider: string | null;
-    level: string | null;
-    aiRelevance: string | null;
-    timeCommitment: string | null;
+    tasks: {
+        title: string;
+        skillType?: string;
+        successMetrics?: string[];
+        urgency?: string;
+    }[];
 }
 
 export async function GET(
@@ -39,52 +28,38 @@ export async function GET(
         const searchParams = request.nextUrl.searchParams;
         const userId = searchParams.get('userId');
         const { stepId } = await params;
-        const stepIdNum = parseInt(stepId);
         
         if (!userId) {
             return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
         }
 
-        if (isNaN(stepIdNum)) {
-            return NextResponse.json({ error: 'Invalid step ID' }, { status: 400 });
-        }
-
-        // Get the most recent career analysis first
-        const recentAnalysis = await prisma.careerAnalysis.findFirst({
-            where: { userId },
-            orderBy: { createdAt: 'desc' },
-            include: {
-                steps: {
-                    where: { id: stepIdNum },
-                    include: {
-                        resources: true
-                    }
-                }
-            }
-        });
-
-        if (!recentAnalysis || !recentAnalysis.steps.length) {
+        // Get the step
+        const step = await getDocument<Step>('steps', stepId);
+        
+        if (!step) {
             return NextResponse.json({ error: 'Step not found' }, { status: 404 });
         }
 
-        const step = recentAnalysis.steps[0];
+        // Get the career analysis to verify ownership
+        const analysis = await getDocument<CareerAnalysis>('careerAnalyses', step.analysisId);
+        
+        if (!analysis || analysis.userId !== userId) {
+            return NextResponse.json({ error: 'Step not found' }, { status: 404 });
+        }
 
         // Get the user's progress for this step
-        const stepProgress = await prisma.stepProgress.findUnique({
-            where: {
-                userId_stepId: {
-                    userId,
-                    stepId: stepIdNum
-                }
-            }
-        });
+        const stepProgresses = await getDocumentsByField<StepProgress>('stepProgress', 'stepId', stepId);
+        const stepProgress = stepProgresses.find(progress => progress.userId === userId);
+
+        // Get resources for this step
+        const resources = await getDocumentsByField<Resource>('resources', 'stepId', stepId);
 
         // Parse the analysis to get additional step data
-        const analysisData = JSON.parse(recentAnalysis.analysis);
+        const analysisData = JSON.parse(analysis.analysis);
         const stepCategory = analysisData.aiRoadmap.find((category: Category) => 
-            category.tasks.some((task: Task) => task.title === step.title)
+            category.tasks.some((task: { title: string }) => task.title === step.title)
         );
-        const stepDetails = stepCategory?.tasks.find((task: Task) => task.title === step.title);
+        const stepDetails = stepCategory?.tasks.find((task: { title: string }) => task.title === step.title);
 
         // Combine step data with progress and additional details
         const stepWithProgress = {
@@ -96,13 +71,13 @@ export async function GET(
             skillType: stepDetails?.skillType || step.skillType,
             successMetrics: stepDetails?.successMetrics || step.successMetrics || [],
             urgency: stepDetails?.urgency || step.timeframe,
-            resources: step.resources.map((resource: StepResource) => ({
+            resources: resources.map((resource: Resource) => ({
                 ...resource,
                 provider: resource.provider || 'General',
                 level: resource.level || 'beginner',
                 aiRelevance: resource.aiRelevance || 'foundational',
                 timeCommitment: resource.timeCommitment || '1-2 hours'
-            })) as StepResource[]
+            }))
         };
 
         return NextResponse.json(stepWithProgress);
@@ -123,73 +98,76 @@ export async function PATCH(
         const body = await request.json();
         const { userId, status, timelineProgress } = body;
         const { stepId } = await params;
-        const stepIdNum = parseInt(stepId);
 
         if (!userId) {
             return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
         }
 
-        if (isNaN(stepIdNum)) {
-            return NextResponse.json({ error: 'Invalid step ID' }, { status: 400 });
-        }
-
         // Verify the step exists and belongs to the user
-        const step = await prisma.step.findFirst({
-            where: {
-                id: stepIdNum,
-                careerAnalysis: {
-                    userId
-                }
-            }
-        });
-
+        const step = await getDocument<Step>('steps', stepId);
+        
         if (!step) {
             return NextResponse.json({ error: 'Step not found' }, { status: 404 });
         }
 
-        // Update both step and step progress in a transaction
+        // Get the career analysis to verify ownership
+        const analysis = await getDocument<CareerAnalysis>('careerAnalyses', step.analysisId);
+        
+        if (!analysis || analysis.userId !== userId) {
+            return NextResponse.json({ error: 'Step not found' }, { status: 404 });
+        }
+
+        // Update the step's status and timeline progress
         const now = new Date();
-        const result = await prisma.$transaction([
-            // Update the step's status and timeline progress
-            prisma.step.update({
-                where: { id: stepIdNum },
-                data: {
-                    status: status,
-                    timelineProgress: timelineProgress || 0,
-                    startedAt: status === 'IN_PROGRESS' ? now : undefined,
-                    completedAt: status === 'COMPLETED' ? now : undefined
-                }
-            }),
-            // Update or create the step progress
-            prisma.stepProgress.upsert({
-                where: {
-                    userId_stepId: {
-                        userId,
-                        stepId: stepIdNum
-                    }
-                },
-                create: {
-                    userId,
-                    stepId: stepIdNum,
-                    status: status,
-                    startedAt: status === 'IN_PROGRESS' ? now : null,
-                    completedAt: status === 'COMPLETED' ? now : null
-                },
-                update: {
-                    status: status,
-                    startedAt: status === 'IN_PROGRESS' ? now : undefined,
-                    completedAt: status === 'COMPLETED' ? now : undefined
-                }
-            })
-        ]);
+        await updateDocument<Step>('steps', stepId, {
+            status: status,
+            timelineProgress: timelineProgress || 0,
+            startedAt: status === 'IN_PROGRESS' ? now : undefined,
+            completedAt: status === 'COMPLETED' ? now : undefined
+        });
+
+        // Get or create step progress
+        const stepProgresses = await getDocumentsByField<StepProgress>('stepProgress', 'stepId', stepId);
+        const existingProgress = stepProgresses.find(progress => progress.userId === userId);
+
+        let stepProgress: StepProgress;
+        if (existingProgress) {
+            // Update existing progress
+            await updateDocument<StepProgress>('stepProgress', existingProgress.id, {
+                status: status,
+                startedAt: status === 'IN_PROGRESS' ? now : undefined,
+                completedAt: status === 'COMPLETED' ? now : undefined
+            });
+            stepProgress = { ...existingProgress, status, startedAt: status === 'IN_PROGRESS' ? now : undefined, completedAt: status === 'COMPLETED' ? now : undefined };
+        } else {
+            // Create new progress
+            const progressId = await createDocument<StepProgress>('stepProgress', {
+                userId,
+                stepId,
+                status: status,
+                startedAt: status === 'IN_PROGRESS' ? now : undefined,
+                completedAt: status === 'COMPLETED' ? now : undefined
+            });
+            stepProgress = {
+                id: progressId,
+                userId,
+                stepId,
+                status,
+                startedAt: status === 'IN_PROGRESS' ? now : undefined,
+                completedAt: status === 'COMPLETED' ? now : undefined
+            };
+        }
+
+        // Get the updated step
+        const updatedStep = await getDocument<Step>('steps', stepId);
 
         // Return the updated step with progress
-        const updatedStep = {
-            ...result[0],
-            progress: result[1]
+        const result = {
+            ...updatedStep,
+            progress: stepProgress
         };
 
-        return NextResponse.json(updatedStep);
+        return NextResponse.json(result);
     } catch (error: unknown) {
         console.error('Error updating step:', error);
         return NextResponse.json({ 

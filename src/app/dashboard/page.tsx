@@ -250,6 +250,7 @@ export default function DashboardPage() {
             params: { userId },
             withCredentials: true,
           });
+          console.log('User response:', userResponse.data);
           setUserData(userResponse.data);
 
           // 2. Then get career analysis which includes progress
@@ -258,7 +259,60 @@ export default function DashboardPage() {
           }, {
             withCredentials: true,
           });
-          setCareerAnalysis(analysisResponse.data);
+          
+          // Handle the analysis response properly
+          console.log('Analysis response:', analysisResponse.data);
+          if (analysisResponse.data && typeof analysisResponse.data === 'object') {
+            setCareerAnalysis(analysisResponse.data);
+          } else {
+            console.warn('Invalid analysis response:', analysisResponse.data);
+            // Set default analysis data
+            setCareerAnalysis({
+              progressPercentage: {
+                "technical-proficiency": 0,
+                "domain-adaptation": 0,
+                "future-readiness": 0,
+                "network-strength": 0
+              },
+              totalProgress: 0,
+              aiRoadmap: [],
+              trendAnalysis: {
+                emergingTechnologies: [],
+                industryOpportunities: [],
+                riskAreas: [],
+                atRiskSkills: [],
+                crossTraining: []
+              },
+              certificationPath: [],
+              projectRecommendations: [],
+              communityStrategy: {
+                networkingTargets: [],
+                contributionOpportunities: [],
+                mentorshipRecommendations: [],
+                platforms: [],
+                focusAreas: [],
+                engagementTips: []
+              },
+              riskAssessment: {
+                level: "low",
+                factors: [],
+                mitigationSteps: [],
+                automationThreat: "low",
+                skillDecay: "No risk factors identified",
+                marketCompetition: "Market competition data not available"
+              },
+              skillsAnalysis: {
+                currentSkills: [],
+                recommendedSkills: [],
+                skillCategories: {
+                  technical: [],
+                  domain: [],
+                  soft: [],
+                  future: []
+                }
+              }
+            });
+          }
 
           // 3. Finally get steps
           try {
@@ -267,6 +321,7 @@ export default function DashboardPage() {
               withCredentials: true,
             });
             
+            console.log('Steps response:', stepsResponse.data);
             if (Array.isArray(stepsResponse.data)) {
               setSteps(stepsResponse.data);
             } else {
@@ -297,7 +352,7 @@ export default function DashboardPage() {
               riskAreas: [],
               atRiskSkills: [],
               crossTraining: []
-            } as TrendAnalysis,
+            },
             certificationPath: [],
             projectRecommendations: [],
             communityStrategy: {
@@ -367,14 +422,22 @@ export default function DashboardPage() {
           </div>
         </div>
       ) : error ? (
-        <div className="text-center text-red-500">
-          <p>Error: {error}</p>
-          <Button 
-            onClick={() => window.location.reload()} 
-            className="mt-4"
-          >
-            Try Again
-          </Button>
+        <div className="text-center space-y-6">
+          <div className="space-y-2">
+            <p className="text-red-500 text-lg">Error: {error}</p>
+            <p className="text-muted-foreground">Your dashboard couldn't load. Let's debug this step by step.</p>
+          </div>
+          
+          {/* Simple retry button for errors */}
+          <div className="flex justify-center">
+            <Button
+              variant="outline"
+              onClick={() => window.location.reload()}
+              className="bg-blue-500/10 text-blue-500 border-blue-500/20 hover:bg-blue-500/20"
+            >
+              Try Again
+            </Button>
+          </div>
         </div>
       ) : (
         <>
@@ -384,7 +447,7 @@ export default function DashboardPage() {
             <div className="relative flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div className="space-y-2">
                 <h1 className="text-4xl font-bold flex items-center gap-3 bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent">
-                Welcome back, {userData?.name}!
+                Welcome back, {userData?.name || 'User'}!
                   <span className="p-2 rounded-xl bg-primary/10 backdrop-blur-sm">
                     <Trophy className="h-8 w-8 text-primary" />
                 </span>
@@ -394,13 +457,61 @@ export default function DashboardPage() {
                 <span className="text-primary font-medium">{userData?.dreamJob || 'your dream job'}</span>
               </p>
               </div>
+              
+
             </div>
           </div>
 
-          {/* Main Content */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Quick Overview Card */}
-            <Card className="lg:col-span-2 shadow-2xl hover:shadow-3xl transition-all duration-500 overflow-hidden border-0 bg-gradient-to-br from-background/80 via-accent/5 to-background/80 backdrop-blur-xl">
+          {/* Check if we have any data */}
+          {(!userData || !careerAnalysis || steps.length === 0) && (
+            <div className="text-center space-y-6 py-12">
+              <div className="space-y-4">
+                <div className="p-4 rounded-2xl bg-yellow-500/10 border border-yellow-500/20">
+                  <h3 className="text-xl font-semibold text-yellow-600 mb-2">No Data Found</h3>
+                  <p className="text-yellow-700/80">
+                    It looks like you don't have any career data yet. Let's get you started!
+                  </p>
+                </div>
+                
+                <div className="flex justify-center">
+                  {/* <Button
+                    variant="outline"
+                    onClick={async () => {
+                      const user = auth.currentUser;
+                      if (user) {
+                        try {
+                          const response = await axios.post('/api/seed-data', {
+                            userId: user.uid,
+                            email: user.email,
+                            name: user.displayName || 'Test User'
+                          });
+                          console.log('Seed data response:', response.data);
+                          alert('Data seeded! Refresh the page.');
+                          window.location.reload();
+                        } catch (error) {
+                          console.error('Error seeding data:', error);
+                          alert('Error seeding data - check console');
+                        }
+                      }
+                    }}
+                    className="bg-green-500/10 text-green-500 border-green-500/20 hover:bg-green-500/20"
+                  >
+                    Create Sample Data
+                  </Button> */}
+                </div>
+                
+                <p className="text-sm text-muted-foreground">
+                  Click "Create Sample Data" to populate your dashboard with example content.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Main Content - Only show when we have data */}
+          {userData && careerAnalysis && steps.length > 0 && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Quick Overview Card */}
+              <Card className="lg:col-span-2 shadow-2xl hover:shadow-3xl transition-all duration-500 overflow-hidden border-0 bg-gradient-to-br from-background/80 via-accent/5 to-background/80 backdrop-blur-xl">
               <CardHeader className="border-b border-accent/10 bg-gradient-to-r from-accent/5 via-primary/5 to-accent/5 backdrop-blur-xl py-8">
                 <CardTitle className="text-3xl flex items-center gap-3 bg-gradient-to-r from-primary via-primary/80 to-primary bg-clip-text text-transparent">
                   <div className="p-3 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/5 backdrop-blur-xl shadow-inner">
@@ -572,15 +683,21 @@ export default function DashboardPage() {
                           Key Strengths
                         </h4>
                         <div className="flex flex-wrap gap-2">
-                          {careerAnalysis?.trendAnalysis?.emergingTechnologies?.slice(0, 3).map((tech, index) => (
-                            <Badge
-                              key={index}
-                              variant="secondary"
-                              className="bg-primary/10 hover:bg-primary/20 text-primary border-primary/20 transition-all duration-300"
-                            >
-                              {tech}
+                          {careerAnalysis?.trendAnalysis?.emergingTechnologies && Array.isArray(careerAnalysis.trendAnalysis.emergingTechnologies) && careerAnalysis.trendAnalysis.emergingTechnologies.length > 0 ? (
+                            careerAnalysis.trendAnalysis.emergingTechnologies.slice(0, 3).map((tech, index) => (
+                              <Badge
+                                key={index}
+                                variant="secondary"
+                                className="bg-primary/10 hover:bg-primary/20 text-primary border-primary/20 transition-all duration-300"
+                              >
+                                {tech}
+                              </Badge>
+                            ))
+                          ) : (
+                            <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
+                              AI/ML
                             </Badge>
-                          ))}
+                          )}
                         </div>
                   </div>
 
@@ -592,15 +709,21 @@ export default function DashboardPage() {
                           Growth Areas
                         </h4>
                         <div className="flex flex-wrap gap-2">
-                          {careerAnalysis?.trendAnalysis?.industryOpportunities?.slice(0, 3).map((opp, index) => (
-                            <Badge
-                              key={index}
-                              variant="secondary"
-                              className="bg-primary/10 hover:bg-primary/20 text-primary border-primary/20 transition-all duration-300"
-                            >
-                              {opp}
+                          {careerAnalysis?.trendAnalysis?.industryOpportunities && Array.isArray(careerAnalysis.trendAnalysis.industryOpportunities) && careerAnalysis.trendAnalysis.industryOpportunities.length > 0 ? (
+                            careerAnalysis.trendAnalysis.industryOpportunities.slice(0, 3).map((opp, index) => (
+                              <Badge
+                                key={index}
+                                variant="secondary"
+                                className="bg-primary/10 hover:bg-primary/20 text-primary border-primary/20 transition-all duration-300"
+                              >
+                                {opp}
+                              </Badge>
+                            ))
+                          ) : (
+                            <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20">
+                              Remote Work
                             </Badge>
-                          ))}
+                          )}
                         </div>
                       </div>
                     </div>
@@ -625,7 +748,7 @@ export default function DashboardPage() {
                               {
                                 title: "Skills at Risk",
                                 icon: Target,
-                                items: careerAnalysis?.trendAnalysis?.atRiskSkills
+                                items: careerAnalysis?.trendAnalysis?.atRiskSkills && Array.isArray(careerAnalysis.trendAnalysis.atRiskSkills) ? careerAnalysis.trendAnalysis.atRiskSkills : []
                               },
                               {
                                 title: "Market Competition",
@@ -665,8 +788,8 @@ export default function DashboardPage() {
                                       {section.description}
                                     </p>
                                   )}
-                                  {section.items && (
-                              <div className="flex flex-wrap gap-2">
+                                  {section.items && Array.isArray(section.items) && section.items.length > 0 ? (
+                                    <div className="flex flex-wrap gap-2">
                                       {section.items.map((item, i) => (
                                         <Badge
                                           key={i}
@@ -674,9 +797,13 @@ export default function DashboardPage() {
                                           className="bg-accent/10 hover:bg-accent/20 transition-colors duration-300 text-xs"
                                         >
                                           {item}
-                                  </Badge>
-                                ))}
-                              </div>
+                                        </Badge>
+                                      ))}
+                                    </div>
+                                  ) : (
+                                    <div className="text-sm text-muted-foreground">
+                                      No items available
+                                    </div>
                                   )}
                             </div>
                               </motion.div>
@@ -776,7 +903,7 @@ export default function DashboardPage() {
                 </div>
               </CardContent>
             </Card>
-          </div>
+          </div>)}
 
           {/* Additional Career Resources */}
           <div className="mt-6">
@@ -964,43 +1091,52 @@ export default function DashboardPage() {
                                 <h4 className="text-lg font-medium">Current Skills</h4>
                               </div>
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-8">
-                                {careerAnalysis?.skillsAnalysis?.currentSkills.map((skill, index) => (
-                                  <motion.div
-                                    key={index}
-                                    initial={{ x: -10, opacity: 0 }}
-                                    animate={{ x: 0, opacity: 1 }}
-                                    transition={{ delay: index * 0.1 }}
-                                    className="relative flex items-start gap-3 p-4 rounded-xl bg-accent/10 hover:bg-accent/20 transition-all duration-300 group"
-                                  >
-                                    <div className="absolute left-0 top-0 bottom-0 w-1 rounded-full bg-gradient-to-b from-transparent via-primary/20 to-transparent" />
-                                    <div className="space-y-2 flex-1">
-                                      <div className="flex items-center justify-between">
-                                        <span className="font-medium">{skill.name}</span>
-                                        <Badge variant="outline" className={cn(
-                                          "transition-colors duration-300",
-                                          skill.proficiency === 'advanced' ? 'border-green-500/20 text-green-500' :
-                                          skill.proficiency === 'intermediate' ? 'border-blue-500/20 text-blue-500' :
-                                          'border-orange-500/20 text-orange-500'
-                                        )}>
-                                          {skill.proficiency}
-                                        </Badge>
+                                {careerAnalysis?.skillsAnalysis?.currentSkills && Array.isArray(careerAnalysis.skillsAnalysis.currentSkills) ? (
+                                  careerAnalysis.skillsAnalysis.currentSkills.map((skill, index) => (
+                                    <motion.div
+                                      key={index}
+                                      initial={{ x: -10, opacity: 0 }}
+                                      animate={{ x: 0, opacity: 1 }}
+                                      transition={{ delay: index * 0.1 }}
+                                      className="relative flex items-start gap-3 p-4 rounded-xl bg-accent/10 hover:bg-accent/20 transition-all duration-300 group"
+                                    >
+                                      <div className="absolute left-0 top-0 bottom-0 w-1 rounded-full bg-gradient-to-b from-transparent via-primary/20 to-transparent" />
+                                      <div className="space-y-2 flex-1">
+                                        <div className="flex items-center justify-between">
+                                          <span className="font-medium">{skill.name || 'Unnamed Skill'}</span>
+                                          <Badge variant="outline" className={cn(
+                                            "transition-colors duration-300",
+                                            skill.proficiency === 'advanced' ? 'border-green-500/20 text-green-500' :
+                                            skill.proficiency === 'intermediate' ? 'border-blue-500/20 text-blue-500' :
+                                            'border-orange-500/20 text-orange-500'
+                                          )}>
+                                            {skill.proficiency || 'beginner'}
+                                          </Badge>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          <Badge variant="secondary" className="bg-primary/10 text-primary text-xs">
+                                            {skill.category || 'technical'}
+                                          </Badge>
+                                          <Badge variant="secondary" className={cn(
+                                            "text-xs",
+                                            skill.relevance === 'high' ? 'bg-green-500/10 text-green-500' :
+                                            skill.relevance === 'medium' ? 'bg-blue-500/10 text-blue-500' :
+                                            'bg-orange-500/10 text-orange-500'
+                                          )}>
+                                            {skill.relevance || 'medium'} relevance
+                                          </Badge>
+                                        </div>
                                       </div>
-                                      <div className="flex items-center gap-2">
-                                        <Badge variant="secondary" className="bg-primary/10 text-primary text-xs">
-                                          {skill.category}
-                                        </Badge>
-                                        <Badge variant="secondary" className={cn(
-                                          "text-xs",
-                                          skill.relevance === 'high' ? 'bg-green-500/10 text-green-500' :
-                                          skill.relevance === 'medium' ? 'bg-blue-500/10 text-blue-500' :
-                                          'bg-orange-500/10 text-orange-500'
-                                        )}>
-                                          {skill.relevance} relevance
-                                        </Badge>
-                                      </div>
+                                    </motion.div>
+                                  ))
+                                ) : (
+                                  <div className="col-span-2 text-center text-muted-foreground py-8">
+                                    <div className="p-4 rounded-xl bg-accent/10">
+                                      <p>No current skills data available</p>
+                                      <p className="text-sm">Complete your profile to see your skills analysis</p>
                                     </div>
-                                  </motion.div>
-                                ))}
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </motion.div>
@@ -1021,46 +1157,55 @@ export default function DashboardPage() {
                                 <h4 className="text-lg font-medium">Recommended Skills</h4>
                               </div>
                               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-8">
-                                {careerAnalysis?.skillsAnalysis?.recommendedSkills.map((skill, index) => (
-                                  <motion.div
-                                    key={index}
-                                    initial={{ x: -10, opacity: 0 }}
-                                    animate={{ x: 0, opacity: 1 }}
-                                    transition={{ delay: index * 0.1 }}
-                                    className="relative flex items-start gap-3 p-4 rounded-xl bg-accent/10 hover:bg-accent/20 transition-all duration-300 group"
-                                  >
-                                    <div className="absolute left-0 top-0 bottom-0 w-1 rounded-full bg-gradient-to-b from-transparent via-primary/20 to-transparent" />
-                                    <div className="space-y-2 flex-1">
-                                      <div className="flex items-center justify-between">
-                                        <span className="font-medium">{skill.name}</span>
+                                {careerAnalysis?.skillsAnalysis?.recommendedSkills && Array.isArray(careerAnalysis.skillsAnalysis.recommendedSkills) ? (
+                                  careerAnalysis.skillsAnalysis.recommendedSkills.map((skill, index) => (
+                                    <motion.div
+                                      key={index}
+                                      initial={{ x: -10, opacity: 0 }}
+                                      animate={{ x: 0, opacity: 1 }}
+                                      transition={{ delay: index * 0.1 }}
+                                      className="relative flex items-start gap-3 p-4 rounded-xl bg-accent/10 hover:bg-accent/20 transition-all duration-300 group"
+                                    >
+                                      <div className="absolute left-0 top-0 bottom-0 w-1 rounded-full bg-gradient-to-b from-transparent via-primary/20 to-transparent" />
+                                      <div className="space-y-2 flex-1">
+                                        <div className="flex items-center justify-between">
+                                          <span className="font-medium">{skill.name || 'Unnamed Skill'}</span>
+                                          <Badge variant="outline" className={cn(
+                                            "transition-colors duration-300",
+                                            skill.priority === 'high' ? 'border-red-500/20 text-red-500' :
+                                            skill.priority === 'medium' ? 'border-yellow-500/20 text-yellow-500' :
+                                            'border-blue-500/20 text-blue-500'
+                                          )}>
+                                            {skill.priority || 'medium'} priority
+                                          </Badge>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          <Badge variant="secondary" className="bg-primary/10 text-primary text-xs">
+                                            {skill.category || 'technical'}
+                                          </Badge>
+                                          <Badge variant="secondary" className="bg-accent/10 text-xs">
+                                            {skill.timeToAcquire || '3-6 months'}
+                                          </Badge>
+                                        </div>
                                         <Badge variant="outline" className={cn(
-                                          "transition-colors duration-300",
-                                          skill.priority === 'high' ? 'border-red-500/20 text-red-500' :
-                                          skill.priority === 'medium' ? 'border-yellow-500/20 text-yellow-500' :
-                                          'border-blue-500/20 text-blue-500'
+                                          "text-xs",
+                                          skill.relevance === 'current-market' ? 'border-green-500/20 text-green-500' :
+                                          skill.relevance === 'emerging-trend' ? 'border-blue-500/20 text-blue-500' :
+                                          'border-purple-500/20 text-purple-500'
                                         )}>
-                                          {skill.priority} priority
+                                          {skill.relevance ? skill.relevance.replace('-', ' ') : 'current market'}
                                         </Badge>
                                       </div>
-                                      <div className="flex items-center gap-2">
-                                        <Badge variant="secondary" className="bg-primary/10 text-primary text-xs">
-                                          {skill.category}
-                                        </Badge>
-                                        <Badge variant="secondary" className="bg-accent/10 text-xs">
-                                          {skill.timeToAcquire}
-                                        </Badge>
-                                      </div>
-                                      <Badge variant="outline" className={cn(
-                                        "text-xs",
-                                        skill.relevance === 'current-market' ? 'border-green-500/20 text-green-500' :
-                                        skill.relevance === 'emerging-trend' ? 'border-blue-500/20 text-blue-500' :
-                                        'border-purple-500/20 text-purple-500'
-                                      )}>
-                                        {skill.relevance.replace('-', ' ')}
-                                      </Badge>
+                                    </motion.div>
+                                  ))
+                                ) : (
+                                  <div className="col-span-2 text-center text-muted-foreground py-8">
+                                    <div className="p-4 rounded-xl bg-accent/10">
+                                      <p>No recommended skills data available</p>
+                                      <p className="text-sm">Complete your profile to get personalized skill recommendations</p>
                                     </div>
-                                  </motion.div>
-                                ))}
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </motion.div>
@@ -1072,39 +1217,52 @@ export default function DashboardPage() {
                             transition={{ delay: 0.4 }}
                             className="grid grid-cols-1 md:grid-cols-2 gap-6"
                           >
-                            {Object.entries(careerAnalysis?.skillsAnalysis?.skillCategories || {}).map(([category, skills], idx) => (
-                              <motion.div
-                                key={category}
-                                initial={{ scale: 0.95, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                transition={{ delay: idx * 0.1 }}
-                                className="relative p-6 rounded-2xl border border-accent/10 bg-gradient-to-br from-accent/10 via-background to-accent/5 backdrop-blur-xl"
-                              >
-                                <div className="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
-                                <div className="relative space-y-4">
-                                  <div className="flex items-center gap-3">
-                                    <div className="p-2 rounded-xl bg-primary/10">
-                                      {category === 'technical' ? <Code className="h-5 w-5 text-primary" /> :
-                                       category === 'domain' ? <BookOpen className="h-5 w-5 text-primary" /> :
-                                       category === 'soft' ? <Users className="h-5 w-5 text-primary" /> :
-                                       <Rocket className="h-5 w-5 text-primary" />}
+                            {careerAnalysis?.skillsAnalysis?.skillCategories && Object.keys(careerAnalysis.skillsAnalysis.skillCategories).length > 0 ? (
+                              Object.entries(careerAnalysis.skillsAnalysis.skillCategories).map(([category, skills], idx) => (
+                                <motion.div
+                                  key={category}
+                                  initial={{ scale: 0.95, opacity: 0 }}
+                                  animate={{ scale: 1, opacity: 1 }}
+                                  transition={{ delay: idx * 0.1 }}
+                                  className="relative p-6 rounded-2xl border border-accent/10 bg-gradient-to-br from-accent/10 via-background to-accent/5 backdrop-blur-xl"
+                                >
+                                  <div className="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
+                                  <div className="relative space-y-4">
+                                    <div className="flex items-center gap-3">
+                                      <div className="p-2 rounded-xl bg-primary/10">
+                                        {category === 'technical' ? <Code className="h-5 w-5 text-primary" /> :
+                                         category === 'domain' ? <BookOpen className="h-5 w-5 text-primary" /> :
+                                         category === 'soft' ? <Users className="h-5 w-5 text-primary" /> :
+                                         <Rocket className="h-5 w-5 text-primary" />}
+                                      </div>
+                                      <h4 className="text-lg font-medium capitalize">{category} Skills</h4>
                                     </div>
-                                    <h4 className="text-lg font-medium capitalize">{category} Skills</h4>
+                                    <div className="flex flex-wrap gap-2 pl-8">
+                                      {Array.isArray(skills) ? skills.map((skill, index) => (
+                                        <Badge
+                                          key={index}
+                                          variant="secondary"
+                                          className="bg-primary/10 hover:bg-primary/20 text-primary text-xs transition-colors duration-300"
+                                        >
+                                          {skill}
+                                        </Badge>
+                                      )) : (
+                                        <Badge variant="secondary" className="text-xs">
+                                          No skills listed
+                                        </Badge>
+                                      )}
+                                    </div>
                                   </div>
-                                  <div className="flex flex-wrap gap-2 pl-8">
-                                    {skills.map((skill, index) => (
-                                      <Badge
-                                        key={index}
-                                        variant="secondary"
-                                        className="bg-primary/10 hover:bg-primary/20 text-primary text-xs transition-colors duration-300"
-                                      >
-                                        {skill}
-                                      </Badge>
-                                    ))}
-                                  </div>
+                                </motion.div>
+                              ))
+                            ) : (
+                              <div className="col-span-2 text-center text-muted-foreground py-8">
+                                <div className="p-4 rounded-xl bg-accent/10">
+                                  <p>No skill categories available</p>
+                                  <p className="text-sm">Complete your profile to see categorized skills</p>
                                 </div>
-                              </motion.div>
-                            ))}
+                              </div>
+                            )}
                           </motion.div>
                         </motion.div>
                       )}
@@ -1141,94 +1299,109 @@ export default function DashboardPage() {
 
                           {/* Certification Grid */}
                           <div className="grid gap-6 md:grid-cols-2">
-                            {careerAnalysis?.certificationPath?.map((cert, index) => (
-                    <motion.div
-                                initial={{ scale: 0.95, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                transition={{ delay: index * 0.1 }}
-                                key={index}
-                                className="group relative p-6 rounded-2xl border border-accent/10 bg-gradient-to-br from-accent/10 via-background to-accent/5 backdrop-blur-xl"
-                              >
-                                <div className="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
-                                <div className="relative space-y-4">
-                                  <div className="flex items-start justify-between">
-                                    <div className="space-y-1">
-                                      <h4 className="text-lg font-medium group-hover:text-primary transition-colors duration-300">
-                                        {cert.name}
-                                      </h4>
-                                      <p className="text-sm text-muted-foreground">
-                                        {cert.provider}
-                                      </p>
-                                    </div>
-                                    <Badge variant="outline" className={cn(
-                                      "transition-colors duration-300",
-                                      cert.level === 'beginner' ? 'border-green-500/20 text-green-500' :
-                                      cert.level === 'intermediate' ? 'border-blue-500/20 text-blue-500' :
-                                      'border-purple-500/20 text-purple-500'
-                                    )}>
-                                      {cert.level}
-                                    </Badge>
-                                  </div>
-
-                                  <div className="space-y-3">
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                      <div className="p-1.5 rounded-lg bg-primary/10">
-                                        <Clock className="h-4 w-4 text-primary" />
-                          </div>
-                            {cert.timeline}
-                          </div>
-
-                                    <div className="space-y-2">
-                                      <div className="flex items-center gap-2">
-                                        <div className="p-1.5 rounded-lg bg-primary/10">
-                                          <Target className="h-4 w-4 text-primary" />
-                                        </div>
-                                        <span className="text-sm font-medium">Purpose</span>
+                            {careerAnalysis?.certificationPath && Array.isArray(careerAnalysis.certificationPath) && careerAnalysis.certificationPath.length > 0 ? (
+                              careerAnalysis.certificationPath.map((cert, index) => (
+                                <motion.div
+                                  initial={{ scale: 0.95, opacity: 0 }}
+                                  animate={{ scale: 1, opacity: 1 }}
+                                  transition={{ delay: index * 0.1 }}
+                                  key={index}
+                                  className="group relative p-6 rounded-2xl border border-accent/10 bg-gradient-to-br from-accent/10 via-background to-accent/5 backdrop-blur-xl"
+                                >
+                                  <div className="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
+                                  <div className="relative space-y-4">
+                                    <div className="flex items-start justify-between">
+                                      <div className="space-y-1">
+                                        <h4 className="text-lg font-medium group-hover:text-primary transition-colors duration-300">
+                                          {cert.name || 'Unnamed Certification'}
+                                        </h4>
+                                        <p className="text-sm text-muted-foreground">
+                                          {cert.provider || 'Provider not specified'}
+                                        </p>
                                       </div>
-                                      <p className="text-sm text-muted-foreground pl-8">
-                                        {cert.purpose}
-                                      </p>
+                                      <Badge variant="outline" className={cn(
+                                        "transition-colors duration-300",
+                                        cert.level === 'beginner' ? 'border-green-500/20 text-green-500' :
+                                        cert.level === 'intermediate' ? 'border-blue-500/20 text-blue-500' :
+                                        'border-purple-500/20 text-purple-500'
+                                      )}>
+                                        {cert.level || 'Not specified'}
+                                      </Badge>
                                     </div>
 
-                                    <div className="space-y-2">
-                                      <div className="flex items-center gap-2">
+                                    <div className="space-y-3">
+                                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                         <div className="p-1.5 rounded-lg bg-primary/10">
-                                          <ListChecks className="h-4 w-4 text-primary" />
+                                          <Clock className="h-4 w-4 text-primary" />
                                         </div>
-                                        <span className="text-sm font-medium">Prerequisites</span>
+                                        {cert.timeline || 'Timeline not specified'}
                                       </div>
-                                      <div className="flex flex-wrap gap-2 pl-8">
-                              {cert.prerequisites.map((prereq, i) => (
-                                          <Badge
-                                            key={i}
-                                            variant="outline"
-                                            className="bg-accent/10 hover:bg-accent/20 transition-colors duration-300 text-xs"
-                                          >
-                                  {prereq}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
-                                  </div>
 
-                          {cert.url && (
-                            <Link 
-                              href={cert.url}
-                              target="_blank"
-                                      className={cn(
-                                        "mt-4 inline-flex items-center gap-2 text-sm",
-                                        "text-primary hover:text-primary/80",
-                                        "group-hover:translate-x-1 transition-all duration-300"
-                                      )}
-                                    >
-                                      <span>View Certification Details</span>
-                              <ExternalLink className="h-3 w-3" />
-                            </Link>
-                          )}
-                        </div>
-                    </motion.div>
-                            ))}
-                    </div>
+                                      <div className="space-y-2">
+                                        <div className="flex items-center gap-2">
+                                          <div className="p-1.5 rounded-lg bg-primary/10">
+                                            <Target className="h-4 w-4 text-primary" />
+                                          </div>
+                                          <span className="text-sm font-medium">Purpose</span>
+                                        </div>
+                                        <p className="text-sm text-muted-foreground pl-8">
+                                          {cert.purpose || 'Purpose not specified'}
+                                        </p>
+                                      </div>
+
+                                      <div className="space-y-2">
+                                        <div className="flex items-center gap-2">
+                                          <div className="p-1.5 rounded-lg bg-primary/10">
+                                            <ListChecks className="h-4 w-4 text-primary" />
+                                          </div>
+                                          <span className="text-sm font-medium">Prerequisites</span>
+                                        </div>
+                                        <div className="flex flex-wrap gap-2 pl-8">
+                                          {Array.isArray(cert.prerequisites) && cert.prerequisites.length > 0 ? (
+                                            cert.prerequisites.map((prereq, i) => (
+                                              <Badge
+                                                key={i}
+                                                variant="outline"
+                                                className="bg-accent/10 hover:bg-accent/20 transition-colors duration-300 text-xs"
+                                              >
+                                                {prereq}
+                                              </Badge>
+                                            ))
+                                          ) : (
+                                            <Badge variant="outline" className="text-xs">
+                                              No prerequisites
+                                            </Badge>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {cert.url && (
+                                      <Link 
+                                        href={cert.url}
+                                        target="_blank"
+                                        className={cn(
+                                          "mt-4 inline-flex items-center gap-2 text-sm",
+                                          "text-primary hover:text-primary/80",
+                                          "group-hover:translate-x-1 transition-all duration-300"
+                                        )}
+                                      >
+                                        <span>View Certification Details</span>
+                                        <ExternalLink className="h-3 w-3" />
+                                      </Link>
+                                    )}
+                                  </div>
+                                </motion.div>
+                              ))
+                            ) : (
+                              <div className="col-span-2 text-center text-muted-foreground py-8">
+                                <div className="p-4 rounded-xl bg-accent/10">
+                                  <p>No certifications available</p>
+                                  <p className="text-sm">Complete your profile to get certification recommendations</p>
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </motion.div>
                       )}
 
@@ -1264,94 +1437,104 @@ export default function DashboardPage() {
 
                           {/* Project Grid */}
                           <div className="grid gap-6 md:grid-cols-2">
-                            {careerAnalysis?.projectRecommendations?.map((project, index) => (
-                    <motion.div
-                                initial={{ scale: 0.95, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                transition={{ delay: index * 0.1 }}
-                                key={index}
-                                className="group relative p-6 rounded-2xl border border-accent/10 bg-gradient-to-br from-accent/10 via-background to-accent/5 backdrop-blur-xl"
-                              >
-                                <div className="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
-                                <div className="relative space-y-4">
-                                  <div className="flex items-start justify-between">
-                                    <div className="space-y-1">
-                                      <h4 className="text-lg font-medium group-hover:text-primary transition-colors duration-300">
-                                        {project.name || 'Unnamed Project'}
-                                      </h4>
-                                      <div className="flex gap-2">
-                                        <Badge variant="outline" className="bg-accent/10 text-xs">
-                                          {project.type || 'Not specified'}
-                                        </Badge>
-                                        <Badge variant="outline" className="bg-accent/10 text-xs">
-                                          {project.domain || 'Not specified'}
-                                        </Badge>
-                          </div>
-                            </div>
-                                    <Badge variant="outline" className={cn(
-                                      "transition-colors duration-300",
-                                      project.difficulty === 'beginner' ? 'border-green-500/20 text-green-500' :
-                                      project.difficulty === 'intermediate' ? 'border-blue-500/20 text-blue-500' :
-                                      'border-purple-500/20 text-purple-500'
-                                    )}>
-                                      {project.difficulty || 'Not specified'}
-                                    </Badge>
-                          </div>
-
-                                  <div className="space-y-3">
-                                    <div className="space-y-2">
-                                      <div className="flex items-center gap-2">
-                                        <div className="p-1.5 rounded-lg bg-primary/10">
-                                          <Target className="h-4 w-4 text-primary" />
-                                        </div>
-                                        <span className="text-sm font-medium">Project Overview</span>
-                                      </div>
-                                      <p className="text-sm text-muted-foreground pl-8">
-                                        {project.description || 'No description available'}
-                          </p>
-                        </div>
-
-                                    <div className="space-y-2">
-                                      <div className="flex items-center gap-2">
-                                        <div className="p-1.5 rounded-lg bg-primary/10">
-                                          <Code className="h-4 w-4 text-primary" />
-                                        </div>
-                                        <span className="text-sm font-medium">Required Skills</span>
-                                      </div>
-                                      <div className="flex flex-wrap gap-2 pl-8">
-                                        {(project.skills || []).map((skill, i) => (
-                                          <Badge
-                                            key={i}
-                                            variant="secondary"
-                                            className="bg-primary/10 hover:bg-primary/20 text-primary text-xs transition-colors duration-300"
-                                          >
-                                            {skill || 'Unnamed Skill'}
+                            {careerAnalysis?.projectRecommendations && Array.isArray(careerAnalysis.projectRecommendations) && careerAnalysis.projectRecommendations.length > 0 ? (
+                              careerAnalysis.projectRecommendations.map((project, index) => (
+                                <motion.div
+                                  initial={{ scale: 0.95, opacity: 0 }}
+                                  animate={{ scale: 1, opacity: 1 }}
+                                  transition={{ delay: index * 0.1 }}
+                                  key={index}
+                                  className="group relative p-6 rounded-2xl border border-accent/10 bg-gradient-to-br from-accent/10 via-background to-accent/5 backdrop-blur-xl"
+                                >
+                                  <div className="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(ellipse_at_center,transparent_20%,black)]" />
+                                  <div className="relative space-y-4">
+                                    <div className="flex items-start justify-between">
+                                      <div className="space-y-1">
+                                        <h4 className="text-lg font-medium group-hover:text-primary transition-colors duration-300">
+                                          {project.name || 'Unnamed Project'}
+                                        </h4>
+                                        <div className="flex gap-2">
+                                          <Badge variant="outline" className="bg-accent/10 text-xs">
+                                            {project.type || 'Not specified'}
                                           </Badge>
-                                        ))}
-                                        {(!project.skills || project.skills.length === 0) && (
-                                          <Badge variant="secondary" className="text-xs">
-                                            No skills specified
+                                          <Badge variant="outline" className="bg-accent/10 text-xs">
+                                            {project.domain || 'Not specified'}
                                           </Badge>
-                                        )}
+                                        </div>
                                       </div>
+                                      <Badge variant="outline" className={cn(
+                                        "transition-colors duration-300",
+                                        project.difficulty === 'beginner' ? 'border-green-500/20 text-green-500' :
+                                        project.difficulty === 'intermediate' ? 'border-blue-500/20 text-blue-500' :
+                                        'border-purple-500/20 text-purple-500'
+                                      )}>
+                                        {project.difficulty || 'Not specified'}
+                                      </Badge>
                                     </div>
 
-                                    <div className="space-y-2">
-                                      <div className="flex items-center gap-2">
-                                        <div className="p-1.5 rounded-lg bg-primary/10">
-                                          <Sparkles className="h-4 w-4 text-primary" />
+                                    <div className="space-y-3">
+                                      <div className="space-y-2">
+                                        <div className="flex items-center gap-2">
+                                          <div className="p-1.5 rounded-lg bg-primary/10">
+                                            <Target className="h-4 w-4 text-primary" />
+                                          </div>
+                                          <span className="text-sm font-medium">Project Overview</span>
                                         </div>
-                                        <span className="text-sm font-medium">Business Impact</span>
+                                        <p className="text-sm text-muted-foreground pl-8">
+                                          {project.description || 'No description available'}
+                                        </p>
                                       </div>
-                                      <p className="text-sm text-muted-foreground pl-8">
-                                        {project.businessImpact || 'No business impact specified'}
-                                      </p>
+
+                                      <div className="space-y-2">
+                                        <div className="flex items-center gap-2">
+                                          <div className="p-1.5 rounded-lg bg-primary/10">
+                                            <Code className="h-4 w-4 text-primary" />
+                                          </div>
+                                          <span className="text-sm font-medium">Required Skills</span>
+                                        </div>
+                                        <div className="flex flex-wrap gap-2 pl-8">
+                                          {Array.isArray(project.skills) && project.skills.length > 0 ? (
+                                            project.skills.map((skill, i) => (
+                                              <Badge
+                                                key={i}
+                                                variant="secondary"
+                                                className="bg-primary/10 hover:bg-primary/20 text-primary text-xs transition-colors duration-300"
+                                              >
+                                                {skill || 'Unnamed Skill'}
+                                              </Badge>
+                                            ))
+                                          ) : (
+                                            <Badge variant="secondary" className="text-xs">
+                                              No skills specified
+                                            </Badge>
+                                          )}
+                                        </div>
+                                      </div>
+
+                                      <div className="space-y-2">
+                                        <div className="flex items-center gap-2">
+                                          <div className="p-1.5 rounded-lg bg-primary/10">
+                                            <Sparkles className="h-4 w-4 text-primary" />
+                                          </div>
+                                          <span className="text-sm font-medium">Business Impact</span>
+                                        </div>
+                                        <p className="text-sm text-muted-foreground pl-8">
+                                          {project.businessImpact || 'No business impact specified'}
+                                        </p>
+                                      </div>
                                     </div>
                                   </div>
+                                </motion.div>
+                              ))
+                            ) : (
+                              <div className="col-span-2 text-center text-muted-foreground py-8">
+                                <div className="p-4 rounded-xl bg-accent/10">
+                                  <p>No project recommendations available</p>
+                                  <p className="text-sm">Complete your profile to get personalized project suggestions</p>
                                 </div>
-                    </motion.div>
-                            ))}
-              </div>
+                              </div>
+                            )}
+                          </div>
                         </motion.div>
                       )}
 
@@ -1402,21 +1585,27 @@ export default function DashboardPage() {
                                   <h4 className="text-lg font-medium">Key Platforms</h4>
                                 </div>
                                 <div className="grid grid-cols-2 gap-2 pl-12">
-                          {careerAnalysis?.communityStrategy?.networkingTargets?.map((platform, index) => (
-                                    <motion.div
-                                      key={index}
-                                      initial={{ x: -10, opacity: 0 }}
-                                      animate={{ x: 0, opacity: 1 }}
-                                      transition={{ delay: index * 0.1 }}
-                                      className="flex items-center gap-2 p-2 rounded-lg bg-accent/10 hover:bg-accent/20 transition-colors duration-300"
-                                    >
-                                      <div className="p-1 rounded-lg bg-primary/10">
-                                        <Users className="h-4 w-4 text-primary" />
-                                      </div>
-                                      <span className="text-sm">{platform}</span>
-                                    </motion.div>
-                          ))}
-                        </div>
+                                  {careerAnalysis?.communityStrategy?.networkingTargets && Array.isArray(careerAnalysis.communityStrategy.networkingTargets) && careerAnalysis.communityStrategy.networkingTargets.length > 0 ? (
+                                    careerAnalysis.communityStrategy.networkingTargets.map((platform, index) => (
+                                      <motion.div
+                                        key={index}
+                                        initial={{ x: -10, opacity: 0 }}
+                                        animate={{ x: 0, opacity: 1 }}
+                                        transition={{ delay: index * 0.1 }}
+                                        className="flex items-center gap-2 p-2 rounded-lg bg-accent/10 hover:bg-accent/20 transition-colors duration-300"
+                                      >
+                                        <div className="p-1 rounded-lg bg-primary/10">
+                                          <Users className="h-4 w-4 text-primary" />
+                                        </div>
+                                        <span className="text-sm">{platform}</span>
+                                      </motion.div>
+                                    ))
+                                  ) : (
+                                    <div className="col-span-2 text-center text-muted-foreground py-4">
+                                      <p className="text-xs">No networking targets available</p>
+                                    </div>
+                                  )}
+                                </div>
                       </div>
                             </motion.div>
 
@@ -1436,21 +1625,27 @@ export default function DashboardPage() {
                                   <h4 className="text-lg font-medium">Contribution Opportunities</h4>
                                 </div>
                                 <div className="grid grid-cols-2 gap-2 pl-12">
-                          {careerAnalysis?.communityStrategy?.contributionOpportunities?.map((opp, index) => (
-                                    <motion.div
-                                      key={index}
-                                      initial={{ x: -10, opacity: 0 }}
-                                      animate={{ x: 0, opacity: 1 }}
-                                      transition={{ delay: index * 0.1 }}
-                                      className="flex items-center gap-2 p-2 rounded-lg bg-accent/10 hover:bg-accent/20 transition-colors duration-300"
-                                    >
-                                      <div className="p-1 rounded-lg bg-primary/10">
-                                        <Target className="h-4 w-4 text-primary" />
-                                      </div>
-                                      <span className="text-sm">{opp}</span>
-                                    </motion.div>
-                          ))}
-                        </div>
+                                  {careerAnalysis?.communityStrategy?.contributionOpportunities && Array.isArray(careerAnalysis.communityStrategy.contributionOpportunities) && careerAnalysis.communityStrategy.contributionOpportunities.length > 0 ? (
+                                    careerAnalysis.communityStrategy.contributionOpportunities.map((opp, index) => (
+                                      <motion.div
+                                        key={index}
+                                        initial={{ x: -10, opacity: 0 }}
+                                        animate={{ x: 0, opacity: 1 }}
+                                        transition={{ delay: index * 0.1 }}
+                                        className="flex items-center gap-2 p-2 rounded-lg bg-accent/10 hover:bg-accent/20 transition-colors duration-300"
+                                      >
+                                        <div className="p-1 rounded-lg bg-primary/10">
+                                          <Target className="h-4 w-4 text-primary" />
+                                        </div>
+                                        <span className="text-sm">{opp}</span>
+                                      </motion.div>
+                                    ))
+                                  ) : (
+                                    <div className="col-span-2 text-center text-muted-foreground py-4">
+                                      <p className="text-xs">No contribution opportunities available</p>
+                                    </div>
+                                  )}
+                                </div>
                       </div>
                             </motion.div>
 
@@ -1470,26 +1665,35 @@ export default function DashboardPage() {
                                   <h4 className="text-lg font-medium">Mentorship Journey</h4>
                                 </div>
                                 <div className="grid md:grid-cols-2 gap-4 pl-12">
-                          {careerAnalysis?.communityStrategy?.mentorshipRecommendations?.map((rec, index) => (
-                                    <motion.div
-                                      key={index}
-                                      initial={{ x: -10, opacity: 0 }}
-                                      animate={{ x: 0, opacity: 1 }}
-                                      transition={{ delay: index * 0.1 }}
-                                      className="relative flex items-start gap-3 p-4 rounded-xl bg-accent/10 hover:bg-accent/20 transition-all duration-300 group/item"
-                                    >
-                                      <div className="absolute left-0 top-0 bottom-0 w-1 rounded-full bg-gradient-to-b from-transparent via-primary/20 to-transparent" />
-                                      <div className="p-1.5 rounded-lg bg-green-500/10 group-hover/item:bg-green-500/20 transition-colors duration-300">
-                                        <CheckCircle className="h-4 w-4 text-green-500" />
-                            </div>
-                                      <div className="space-y-1">
-                                        <span className="text-sm text-muted-foreground group-hover/item:text-foreground transition-colors duration-300">
-                                          {rec}
-                                        </span>
+                                  {careerAnalysis?.communityStrategy?.mentorshipRecommendations && Array.isArray(careerAnalysis.communityStrategy.mentorshipRecommendations) && careerAnalysis.communityStrategy.mentorshipRecommendations.length > 0 ? (
+                                    careerAnalysis.communityStrategy.mentorshipRecommendations.map((rec, index) => (
+                                      <motion.div
+                                        key={index}
+                                        initial={{ x: -10, opacity: 0 }}
+                                        animate={{ x: 0, opacity: 1 }}
+                                        transition={{ delay: index * 0.1 }}
+                                        className="relative flex items-start gap-3 p-4 rounded-xl bg-accent/10 hover:bg-accent/20 transition-all duration-300 group/item"
+                                      >
+                                        <div className="absolute left-0 top-0 bottom-0 w-1 rounded-full bg-gradient-to-b from-transparent via-primary/20 to-transparent" />
+                                        <div className="p-1.5 rounded-lg bg-green-500/10 group-hover/item:bg-green-500/20 transition-colors duration-300">
+                                          <CheckCircle className="h-4 w-4 text-green-500" />
+                                        </div>
+                                        <div className="space-y-1">
+                                          <span className="text-sm text-muted-foreground group-hover/item:text-foreground transition-colors duration-300">
+                                            {rec}
+                                          </span>
+                                        </div>
+                                      </motion.div>
+                                    ))
+                                  ) : (
+                                    <div className="col-span-2 text-center text-muted-foreground py-8">
+                                      <div className="p-4 rounded-xl bg-accent/10">
+                                        <p>No mentorship recommendations available</p>
+                                        <p className="text-sm">Complete your profile to get mentorship suggestions</p>
                                       </div>
-                                    </motion.div>
-                          ))}
-                        </div>
+                                    </div>
+                                  )}
+                                </div>
                       </div>
                     </motion.div>
                     </div>

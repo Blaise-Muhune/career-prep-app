@@ -1,26 +1,12 @@
-import { prisma } from '../../../config/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { Prisma } from '@prisma/client';
-
-const MAX_RETRIES = 3;
-const INITIAL_RETRY_DELAY = 1000; // 1 second
-
-async function retryOperation<T>(operation: () => Promise<T>, retries = MAX_RETRIES, delay = INITIAL_RETRY_DELAY): Promise<T> {
-    try {
-        return await operation();
-    } catch (error: unknown) {
-        if (retries > 0 && (
-            error instanceof Prisma.PrismaClientInitializationError ||
-            error instanceof Prisma.PrismaClientKnownRequestError ||
-            (error instanceof Error && error.message?.includes('Connection terminated'))
-        )) {
-            console.log(`Retrying operation, ${retries} attempts remaining`);
-            await new Promise(resolve => setTimeout(resolve, delay));
-            return retryOperation(operation, retries - 1, delay * 2);
-        }
-        throw error;
-    }
-}
+import { 
+  getDocumentsByField, 
+  createDocument, 
+  updateDocument, 
+  User, 
+  Profile,
+ 
+} from '../../../lib/firestore';
 
 export async function POST(request: NextRequest) {
     try {
@@ -46,78 +32,90 @@ export async function POST(request: NextRequest) {
             }, { status: 400 });
         }
 
-        // Check if user exists by email with retry
-        const existingUser = await retryOperation(async () => 
-            prisma.user.findUnique({
-                where: { email }
-            })
-        );
+        // Check if user exists by email
+        const existingUsers = await getDocumentsByField<User>('users', 'email', email);
+        const existingUser = existingUsers.length > 0 ? existingUsers[0] : null;
 
         // Add debug logging for the user creation/update
         console.log('Creating/updating user with ID:', id);
 
-        let user;
+        let user: User;
         if (existingUser) {
             console.log('Updating existing user:', existingUser.id);
-            user = await retryOperation(async () =>
-                prisma.user.update({
-                    where: { id: existingUser.id },
-                    data: {
-                        name,
-                        dreamJob: dreamJob || 'Unknown'
-                    }
-                })
-            );
+            await updateDocument<User>('users', existingUser.id, {
+                name,
+                dreamJob: dreamJob || 'Unknown'
+            });
+            user = { ...existingUser, name, dreamJob: dreamJob || 'Unknown' };
         } else {
             console.log('Creating new user with ID:', id);
-            user = await retryOperation(async () =>
-                prisma.user.create({
-                    data: {
-                        id,
-                        email,
-                        name,
-                        dreamJob: dreamJob || 'Unknown'
-                    }
-                })
-            );
+            const userId = await createDocument<User>('users', {
+                email,
+                name,
+                dreamJob: dreamJob || 'Unknown',
+                createdAt: new Date(),
+                updatedAt: new Date()
+            });
+            user = {
+                id: userId,
+                email,
+                name,
+                dreamJob: dreamJob || 'Unknown',
+                createdAt: new Date(),
+                updatedAt: new Date()
+            };
         }
 
         // Log the created/updated user
         console.log('User after creation/update:', user);
 
-        // Handle profile with retry
-        const profile = await retryOperation(async () =>
-            prisma.profile.upsert({
-                where: { userId: user.id },
-                create: {
-                    userId: user.id,
-                    bio,
-                    dreamJob,
-                    dreamCompany,
-                    dreamSalary,
-                    skills: {
-                        create: skills?.map((skill: string) => ({
-                            name: skill
-                        })) || []
-                    }
-                },
-                update: {
-                    bio,
-                    dreamJob,
-                    dreamCompany,
-                    dreamSalary,
-                    skills: {
-                        deleteMany: {},
-                        create: skills?.map((skill: string) => ({
-                            name: skill
-                        })) || []
-                    }
-                },
-                include: {
-                    skills: true
-                }
-            })
-        );
+        // Handle profile
+        const existingProfiles = await getDocumentsByField<Profile>('profiles', 'userId', user.id);
+        let profile: Profile;
+
+        if (existingProfiles.length > 0) {
+            // Update existing profile
+            const existingProfile = existingProfiles[0];
+            await updateDocument<Profile>('profiles', existingProfile.id, {
+                bio,
+                dreamJob,
+                dreamCompany,
+                dreamSalary,
+                skills: skills?.map((skill: string) => ({
+                    id: `${existingProfile.id}_${skill}`,
+                    name: skill,
+                    profileId: existingProfile.id
+                })) || []
+            });
+            profile = { ...existingProfile, bio, dreamJob, dreamCompany, dreamSalary };
+        } else {
+            // Create new profile
+            const profileId = await createDocument<Profile>('profiles', {
+                userId: user.id,
+                bio,
+                dreamJob,
+                dreamCompany,
+                dreamSalary,
+                skills: skills?.map((skill: string) => ({
+                    id: `${user.id}_${skill}`,
+                    name: skill,
+                    profileId: user.id
+                })) || []
+            });
+            profile = {
+                id: profileId,
+                userId: user.id,
+                bio,
+                dreamJob,
+                dreamCompany,
+                dreamSalary,
+                skills: skills?.map((skill: string) => ({
+                    id: `${user.id}_${skill}`,
+                    name: skill,
+                    profileId: user.id
+                })) || []
+            };
+        }
 
         // Return the complete user data
         const userData = {
@@ -130,21 +128,12 @@ export async function POST(request: NextRequest) {
     } catch (error: unknown) {
         console.error('Error creating/updating user:', {
             message: error instanceof Error ? error.message : 'Unknown error',
-            code: error instanceof Prisma.PrismaClientKnownRequestError ? error.code : 'Unknown error',
-            meta: error instanceof Prisma.PrismaClientKnownRequestError ? error.meta : 'Unknown error',
             stack: error instanceof Error ? error.stack : 'Unknown error'
         });
         
-        if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-            return NextResponse.json({
-                error: 'Email already exists',
-                details: 'A user with this email already exists in the system'
-            }, { status: 400 });
-        }
-        
         return NextResponse.json({
             error: 'Failed to create/update user',
-                details: error instanceof Error ? error.message : 'Unknown error'
+            details: error instanceof Error ? error.message : 'Unknown error'
         }, { status: 500 });
     }
 } 

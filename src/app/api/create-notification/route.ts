@@ -1,5 +1,5 @@
-import { prisma } from '../../../config/prisma';
 import { NextRequest, NextResponse } from 'next/server';
+import { createDocument, Notification } from '../../../lib/firestore';
 
 export async function POST(request: NextRequest) {
     try {
@@ -10,16 +10,25 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
         }
 
-        const notification = await prisma.notification.create({
-            data: {
-                userId,
-                type,
-                message,
-                stepId,
-                date: new Date(),
-                read: false
-            }
+        const notificationId = await createDocument<Notification>('notifications', {
+            userId,
+            type,
+            message,
+            stepId,
+            date: new Date(),
+            read: false
         });
+
+        // Get the created notification to return
+        const notification = {
+            id: notificationId,
+            userId,
+            type,
+            message,
+            stepId,
+            date: new Date(),
+            read: false
+        };
 
         return NextResponse.json(notification);
     } catch (error: unknown) {

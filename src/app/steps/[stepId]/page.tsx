@@ -69,11 +69,12 @@ export default function StepPage() {
       }
 
       // First, get the latest career analysis to ensure the step exists
-      const analysisResponse = await fetch(`/api/career-analysis?userId=${currentUser.uid}`, {
-        method: 'GET',
+      const analysisResponse = await fetch(`/api/structure-profile?userId=${currentUser.uid}`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({ userId: currentUser.uid }),
       });
 
       if (!analysisResponse.ok) {

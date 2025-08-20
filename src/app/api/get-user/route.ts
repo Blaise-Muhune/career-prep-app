@@ -1,6 +1,13 @@
-import { prisma } from '../../../config/prisma';
 import { NextRequest, NextResponse } from 'next/server';
-import { Skill, Task } from '@prisma/client';
+import { 
+  getDocument, 
+  getDocumentsByField, 
+  User, 
+  Profile, 
+  Task, 
+  StepProgress,
+  convertTimestamp 
+} from '../../../lib/firestore';
 
 export async function GET(request: NextRequest) {
     const searchParams = request.nextUrl.searchParams;
@@ -11,28 +18,31 @@ export async function GET(request: NextRequest) {
     }
     
     try {
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        include: {
-          profile: {
-            include: {
-              skills: true,
-            },
-          },
-          tasks: {
-            where: { completed: false },
-            orderBy: { dueDate: 'asc' },
-          },
-          stepProgress: {
-            orderBy: { stepId: 'asc' },
-          },
-        },
-      });
-  
+      console.log('Looking for user with ID:', userId);
+      
+      // Get user data
+      const user = await getDocument<User>('users', userId);
+      console.log('User found:', user);
+      
       if (!user) {
+        console.log('User not found in database');
         return NextResponse.json({ error: 'User not found' }, { status: 404 });
       }
-  
+
+      // Get user profile
+      const profiles = await getDocumentsByField<Profile>('profiles', 'userId', userId);
+      const profile = profiles.length > 0 ? profiles[0] : null;
+
+      // Get user tasks
+      const tasks = await getDocumentsByField<Task>('tasks', 'userId', userId);
+      const activeTasks = tasks
+        .filter(task => !task.completed)
+        .sort((a, b) => convertTimestamp(a.dueDate).getTime() - convertTimestamp(b.dueDate).getTime());
+
+      // Get step progress
+      const stepProgress = await getDocumentsByField<StepProgress>('stepProgress', 'userId', userId);
+      const sortedStepProgress = stepProgress.sort((a, b) => a.stepId.localeCompare(b.stepId));
+
       // Format the response to include only necessary data
       const userData = {
         id: user.id,
@@ -40,23 +50,24 @@ export async function GET(request: NextRequest) {
         name: user.name,
         dreamJob: user.dreamJob,
         preferences: user.preferences || null,
-        profile: user.profile ? {
-          bio: user.profile.bio,
-          dreamJob: user.profile.dreamJob,
-          dreamCompany: user.profile.dreamCompany,
-          dreamSalary: user.profile.dreamSalary,
-          skills: user.profile.skills.map((skill: Skill) => ({
-            id: skill.id,
-            name: skill.name
-          }))
+        profile: profile ? {
+          bio: profile.bio,
+          dreamJob: profile.dreamJob,
+          dreamCompany: profile.dreamCompany,
+          dreamSalary: profile.dreamSalary,
+          skills: profile.skills || []
         } : null,
-        tasks: user.tasks.map((task: Task) => ({
+        tasks: activeTasks.map(task => ({
           id: task.id,
           title: task.title,
-          dueDate: task.dueDate,
+          dueDate: convertTimestamp(task.dueDate),
           completed: task.completed
         })),
-        stepProgress: user.stepProgress
+        stepProgress: sortedStepProgress.map(progress => ({
+          ...progress,
+          startedAt: progress.startedAt ? convertTimestamp(progress.startedAt) : undefined,
+          completedAt: progress.completedAt ? convertTimestamp(progress.completedAt) : undefined
+        }))
       };
   
       return NextResponse.json(userData);

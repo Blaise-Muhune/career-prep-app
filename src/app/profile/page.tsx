@@ -60,7 +60,20 @@ export default function ProfilePage() {
           params: { userId: currentUser.uid },
           withCredentials: true
         });
-        setUser(response.data);
+        
+        // Ensure profile data exists, initialize with defaults if null
+        const userData = response.data;
+        if (userData && !userData.profile) {
+          userData.profile = {
+            bio: '',
+            dreamJob: '',
+            dreamCompany: '',
+            dreamSalary: '',
+            skills: []
+          };
+        }
+        
+        setUser(userData);
       } catch (error) {
         console.error('Error fetching profile:', error);
       } finally {
@@ -80,7 +93,13 @@ export default function ProfilePage() {
       setUser(prev => prev ? {
         ...prev,
         profile: {
-          ...prev.profile,
+          ...prev.profile || {
+            bio: '',
+            dreamJob: '',
+            dreamCompany: '',
+            dreamSalary: '',
+            skills: []
+          },
           [profileField]: value
         }
       } : null);
@@ -103,11 +122,11 @@ export default function ProfilePage() {
         id: currentUser.uid,
         email: user.email,
         name: user.name,
-        bio: user.profile.bio,
-        skills: user.profile.skills.map(s => s.name),
-        dreamJob: user.profile.dreamJob,
-        dreamCompany: user.profile.dreamCompany,
-        dreamSalary: user.profile.dreamSalary
+        bio: user.profile?.bio || '',
+        skills: (user.profile?.skills || []).map(s => s.name),
+        dreamJob: user.profile?.dreamJob || '',
+        dreamCompany: user.profile?.dreamCompany || '',
+        dreamSalary: user.profile?.dreamSalary || ''
       }, {
         withCredentials: true
       });
@@ -145,7 +164,12 @@ export default function ProfilePage() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-4xl font-bold">Profile</h1>
-          <p className="text-muted-foreground mt-2">Manage your personal information</p>
+          <p className="text-muted-foreground mt-2">
+            {user.profile?.bio || user.profile?.dreamJob ? 
+              'Manage your personal information' : 
+              'Complete your profile to get personalized career recommendations'
+            }
+          </p>
         </div>
         <Button 
           variant="outline"
@@ -189,7 +213,7 @@ export default function ProfilePage() {
         </CardHeader>
 
         <CardContent className="space-y-8">
-          <div className="space-y-2">
+                    <div className="space-y-2">
             <Label htmlFor="bio" className="flex items-center gap-2">
               <FileText className="h-4 w-4 text-muted-foreground" />
               Bio
@@ -198,13 +222,24 @@ export default function ProfilePage() {
               <Textarea
                 id="bio"
                 name="profile.bio"
-                value={user.profile.bio}
+                value={user.profile?.bio || ''}
                 onChange={handleInputChange}
                 rows={4}
+                placeholder="Tell us about yourself, your goals, and what drives you..."
                 className="resize-none transition-all duration-200 focus:ring-2 focus:ring-primary/20"
               />
             ) : (
-              <p className="text-muted-foreground">{user.profile.bio}</p>
+              <div>
+                {user.profile?.bio ? (
+                  <p className="text-muted-foreground">{user.profile.bio}</p>
+                ) : (
+                  <div className="text-center py-8 border-2 border-dashed border-muted-foreground/20 rounded-lg">
+                    <FileText className="h-12 w-12 text-muted-foreground/40 mx-auto mb-2" />
+                    <p className="text-muted-foreground">No bio added yet</p>
+                    <p className="text-sm text-muted-foreground/60">Click edit to add your bio</p>
+                  </div>
+                )}
+              </div>
             )}
           </div>
 
@@ -218,12 +253,12 @@ export default function ProfilePage() {
                 <Input
                   id="dreamJob"
                   name="profile.dreamJob"
-                  value={user.profile.dreamJob}
+                  value={user.profile?.dreamJob || ''}
                   onChange={handleInputChange}
                   className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
                 />
               ) : (
-                <p className="text-muted-foreground">{user.profile.dreamJob}</p>
+                <p className="text-muted-foreground">{user.profile?.dreamJob || 'No dream job specified'}</p>
               )}
             </div>
 
@@ -236,12 +271,12 @@ export default function ProfilePage() {
                 <Input
                   id="dreamCompany"
                   name="profile.dreamCompany"
-                  value={user.profile.dreamCompany}
+                  value={user.profile?.dreamCompany || ''}
                   onChange={handleInputChange}
                   className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
                 />
               ) : (
-                <p className="text-muted-foreground">{user.profile.dreamCompany}</p>
+                <p className="text-muted-foreground">{user.profile?.dreamCompany || 'No dream company specified'}</p>
               )}
             </div>
           </div>
@@ -255,12 +290,12 @@ export default function ProfilePage() {
               <Input
                 id="dreamSalary"
                 name="profile.dreamSalary"
-                value={user.profile.dreamSalary}
+                                  value={user.profile?.dreamSalary || ''}
                 onChange={handleInputChange}
                 className="transition-all duration-200 focus:ring-2 focus:ring-primary/20"
               />
             ) : (
-              <p className="text-muted-foreground">{user.profile.dreamSalary}</p>
+                              <p className="text-muted-foreground">{user.profile?.dreamSalary || 'No dream salary specified'}</p>
             )}
           </div>
 
@@ -272,14 +307,18 @@ export default function ProfilePage() {
               Skills
             </Label>
             <div className="flex flex-wrap gap-2">
-              {user.profile.skills.map((skill, index) => (
-                <span 
-                  key={index} 
-                  className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium"
-                >
-                  {skill.name}
-                </span>
-              ))}
+              {user.profile?.skills && user.profile.skills.length > 0 ? (
+                user.profile.skills.map((skill, index) => (
+                  <span 
+                    key={index} 
+                    className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium"
+                  >
+                    {skill.name}
+                  </span>
+                ))
+              ) : (
+                <p className="text-muted-foreground text-sm">No skills added yet</p>
+              )}
             </div>
           </div>
         </CardContent>

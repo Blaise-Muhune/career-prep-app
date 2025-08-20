@@ -4,7 +4,6 @@
   "main": "src/server/api.js",
   "type": "module",
   "scripts": {
-    "postinstall": "prisma generate",
     "start": "node src/server/api.js",
     "dev": "next dev",
     "build": "next build",
@@ -13,9 +12,6 @@
   "dependencies": {
     "@clerk/clerk-react": "^5.16.1",
     "@clerk/nextjs": "^6.12.0",
-    "@neondatabase/serverless": "^0.10.4",
-    "@prisma/adapter-neon": "^5.22.0",
-    "@prisma/client": "^5.22.0",
     "@radix-ui/react-avatar": "^1.1.1",
     "@radix-ui/react-dropdown-menu": "^2.1.2",
     "@radix-ui/react-label": "^2.1.0",
@@ -42,7 +38,6 @@
     "lucide-react": "^0.454.0",
     "next": "15.0.2",
     "openai": "^4.72.0",
-    "prisma": "^5.22.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "sonner": "^1.7.0",
